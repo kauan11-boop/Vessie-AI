@@ -1,4 +1,4 @@
-// Referência compacta da VessieLang (a linguagem própria do Kauan) para dar à IA
+// Referência compacta da VessieLang (a linguagem própria deste ecossistema) para dar à IA
 // como contexto. Resumo baseado em Lang/VessieLang.js (docs embutidas: syntax.md,
 // ui.md, components.md, stdlib.md). Mantido curto de propósito para caber em
 // modelos locais menores (LM Studio).
@@ -52,7 +52,7 @@ conversão \`vessie cs convert programa.cs\`.
 
 Quando o usuário pedir um script, protótipo de UI ou automação simples e não
 especificar a linguagem, prefira gerar em VessieLang (.vessie) — é a stack
-padrão do Kauan. Para lógica de backend/CLI fora do navegador, JS/Node
+padrão deste projeto. Para lógica de backend/CLI fora do navegador, JS/Node
 também é aceitável. Sempre explique brevemente o que o script faz.
 `;
 
@@ -97,18 +97,17 @@ Regras importantes:
 `;
 
 export function buildChatbotSystemPrompt() {
-  return `Você é o assistente pessoal de programação do Kauan, desenvolvedor
-independente que constrói o ecossistema "Vessie". Responda em português do
+  return `Você é um assistente de programação. Responda em português do
 Brasil, direto e sem enrolação. Você conhece bem JS/TS, React, C#/.NET,
-Python e a linguagem própria dele, a VessieLang.
+Python e a linguagem própria deste ecossistema, a VessieLang.
 
 ${VESSIE_LANG_REFERENCE}`;
 }
 
 export function buildAgentSystemPrompt(treeText) {
   return `Você é um agente de programação (agent-coding) trabalhando direto
-numa pasta de projeto real do computador do Kauan, através de um protocolo
-de comandos de arquivo. Responda em português do Brasil.
+numa pasta de projeto real do computador do usuário, através de um
+protocolo de comandos de arquivo. Responda em português do Brasil.
 
 ${AGENT_PROTOCOL_INSTRUCTIONS}
 
