@@ -1,0 +1,120 @@
+// Cliente para qualquer backend compatível com a API "chat/completions" da OpenAI.
+// Funciona direto com o LM Studio (padrão: http://localhost:1234/v1), com a API
+// da OpenAI, ou com qualquer proxy compatível. Configurável em tempo de execução
+// pela tela de Configurações (fica salvo no localStorage do navegador).
+
+const DEFAULT_SETTINGS = {
+  baseUrl: "http://localhost:1234/v1",
+  apiKey: "",
+  model: "local-model",
+  temperature: 0.4,
+};
+
+const STORAGE_KEY = "vessie-agent-settings";
+
+export function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+export function saveSettings(settings) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+}
+
+/**
+ * Envia uma conversa para o backend e transmite os pedaços de texto conforme chegam.
+ * @param {Array<{role:string, content:string}>} messages
+ * @param {(chunk:string) => void} onToken
+ * @param {AbortSignal} signal
+ */
+export async function streamChat(messages, onToken, signal) {
+  const settings = loadSettings();
+  const url = `${settings.baseUrl.replace(/\/$/, "")}/chat/completions`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    signal,
+    headers: {
+      "Content-Type": "application/json",
+      ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: settings.model,
+      messages,
+      temperature: Number(settings.temperature ?? 0.4),
+      stream: true,
+    }),
+  });
+
+  if (!res.ok || !res.body) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Falha na requisição (${res.status}): ${text || res.statusText}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+  let full = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const json = JSON.parse(payload);
+        const delta = json.choices?.[0]?.delta?.content ?? "";
+        if (delta) {
+          full += delta;
+          onToken(delta);
+        }
+      } catch {
+        // linha incompleta ou não-JSON: ignora
+      }
+    }
+  }
+
+  return full;
+}
+
+/** Versão sem streaming (usada nas rodadas automáticas do agente). */
+export async function chatOnce(messages, signal) {
+  const settings = loadSettings();
+  const url = `${settings.baseUrl.replace(/\/$/, "")}/chat/completions`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    signal,
+    headers: {
+      "Content-Type": "application/json",
+      ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: settings.model,
+      messages,
+      temperature: Number(settings.temperature ?? 0.4),
+      stream: false,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Falha na requisição (${res.status}): ${text || res.statusText}`);
+  }
+
+  const json = await res.json();
+  return json.choices?.[0]?.message?.content ?? "";
+}
