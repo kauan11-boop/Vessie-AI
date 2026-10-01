@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Message from "./Message.jsx";
 import FileTree from "./FileTree.jsx";
-import { chatOnce, formatAIError } from "../lib/aiClient.js";
+import { formatAIError, loadSettings, searchWeb, streamChat } from "../lib/aiClient.js";
 import { enhanceTaskPrompt } from "../lib/promptEnhancer.js";
 import { buildAgentSystemPrompt } from "../lib/systemPrompts.js";
 import {
@@ -17,7 +17,7 @@ import {
   deleteFile,
   listDir,
 } from "../lib/fsAccess.js";
-import { extractActions, hasActionBlock, isReadOnly, stripActionBlocks } from "../lib/agentProtocol.js";
+import { extractActions, hasActionBlock, isReadOnly, stripActionBlocks, stripStreamingActionBlocks } from "../lib/agentProtocol.js";
 
 const MAX_AUTO_ROUNDS = 3;
 
@@ -197,7 +197,7 @@ export default function AgentCoding() {
     ]);
   }
 
-  async function runReadOnlyAction(action) {
+  async function runReadOnlyAction(action, signal) {
     try {
       if (action.type === "list_dir") {
         const listing = await listDir(rootHandle, action.path || "");
@@ -207,8 +207,12 @@ export default function AgentCoding() {
         const content = await readFile(rootHandle, action.path);
         return `read_file("${action.path}"):\n\`\`\`\n${content}\n\`\`\``;
       }
+      if (action.type === "web_search") {
+        const results = await searchWeb(action.query, signal);
+        return `web_search("${action.query}"):\n${results}`;
+      }
     } catch (err) {
-      return `Erro ao executar ${action.type}("${action.path}"): ${err.message}`;
+      return `Erro ao executar ${action.type}("${action.path || action.query}"): ${err.message}`;
     }
     return "";
   }
@@ -287,8 +291,9 @@ export default function AgentCoding() {
       });
       if (controller.signal.aborted) return;
       setPhase("responding");
+      const webSearchEnabled = Boolean(loadSettings().webSearchApiKey?.trim());
       let conversation = [
-        { role: "system", content: buildAgentSystemPrompt(treeLines, pendingSummary, selectedFileContext) },
+        { role: "system", content: buildAgentSystemPrompt(treeLines, pendingSummary, selectedFileContext, webSearchEnabled) },
         ...history
           .slice(0, -1)
           .filter((message) => message.role !== "system" || message.context === "tool")
@@ -298,10 +303,33 @@ export default function AgentCoding() {
           })),
         { role: "user", content: enhancedPrompt },
       ];
+      async function streamAgentReply(payload) {
+        const messageId = crypto.randomUUID();
+        let response = "";
+        setMessages((current) => [...current, { role: "assistant", content: "Aguardando resposta do modelo…", streamId: messageId }]);
+        try {
+          await streamChat(payload, (chunk) => {
+            response += chunk;
+            const visible = stripStreamingActionBlocks(response) || "Preparando ações…";
+            setMessages((current) => current.map((message) => message.streamId === messageId
+              ? { ...message, content: visible }
+              : message));
+            scrollToBottom();
+          }, controller.signal);
+        } catch (error) {
+          const visible = stripStreamingActionBlocks(response) || (error.name === "AbortError" ? "Geração interrompida." : "");
+          setMessages((current) => current.flatMap((message) => message.streamId !== messageId
+            ? [message]
+            : visible ? [{ role: "assistant", content: visible }] : []));
+          throw error;
+        }
+        return { response, messageId };
+      }
       let awaitingFinalAnswer = false;
       for (let round = 0; round < MAX_AUTO_ROUNDS; round++) {
         if (controller.signal.aborted) break;
-        const reply = await chatOnce(conversation, controller.signal);
+        setPhase("responding");
+        const { response: reply, messageId } = await streamAgentReply(conversation);
         const actions = extractActions(reply);
         const actionBlockFound = hasActionBlock(reply);
         const strippedReply = stripActionBlocks(reply);
@@ -310,8 +338,9 @@ export default function AgentCoding() {
           : strippedReply || "(sem texto, apenas ações)";
 
         setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: visibleText, protocolContent: reply },
+          ...prev.map((message) => message.streamId === messageId
+            ? { role: "assistant", content: visibleText, protocolContent: reply }
+            : message),
           ...(actionBlockFound && actions.length === 0
             ? [{ role: "system", content: "O formato do bloco de ação estava inválido; nenhuma ação foi executada." }]
             : []),
@@ -333,7 +362,8 @@ export default function AgentCoding() {
         const results = [];
         for (const action of readOnly) {
           if (controller.signal.aborted) break;
-          results.push(await runReadOnlyAction(action));
+          setPhase(action.type === "web_search" ? "searching" : "responding");
+          results.push(await runReadOnlyAction(action, controller.signal));
         }
         if (controller.signal.aborted) break;
         const toolText = `Resultado das ações solicitadas:\n\n${results.join("\n\n")}`;
@@ -343,7 +373,8 @@ export default function AgentCoding() {
       }
       if (awaitingFinalAnswer) {
         conversation.push({ role: "user", content: "Você atingiu o limite de leituras automáticas. Use apenas os resultados recebidos e apresente uma conclusão; não solicite mais ações." });
-        const finalReply = await chatOnce(conversation, controller.signal);
+        setPhase("responding");
+        const { response: finalReply, messageId } = await streamAgentReply(conversation);
         const finalActions = extractActions(finalReply);
         finalActions.filter((action) => !isReadOnly(action)).forEach(pushPending);
         const finalStripped = stripActionBlocks(finalReply);
@@ -355,8 +386,9 @@ export default function AgentCoding() {
             ? "A investigação atingiu o limite de leituras automáticas. Peça uma nova etapa para continuar."
             : "Concluí as leituras disponíveis. Veja os resultados acima.");
         setMessages((current) => [
-          ...current,
-          { role: "assistant", content: finalText, protocolContent: finalReply },
+          ...current.map((message) => message.streamId === messageId
+            ? { role: "assistant", content: finalText, protocolContent: finalReply }
+            : message),
           ...(invalidAction
             ? [{ role: "system", content: "O formato do bloco de ação estava inválido; nenhuma ação foi executada." }]
             : []),
@@ -435,8 +467,8 @@ export default function AgentCoding() {
 
       <div className="chat-col">
         <div className="chat-toolbar">
-          <div className="assistant-presence"><span className={`presence-dot ${phase !== "idle" ? "working" : ""}`} /> Vessie AI <span className="toolbar-divider">/</span> {phase === "syncing" ? "Sincronizando projeto…" : phase === "enhancing" ? "Aprimorando seu pedido…" : phase === "responding" ? "Analisando e preparando alterações…" : "Agent Coding"}</div>
-          <span className="privacy-label">{phase === "enhancing" ? "Etapa 1 de 2 · Refinamento com IA" : phase === "responding" ? "Etapa 2 de 2 · Execução do pedido" : "Arquivos locais"}</span>
+          <div className="assistant-presence"><span className={`presence-dot ${phase !== "idle" ? "working" : ""}`} /> Vessie AI <span className="toolbar-divider">/</span> {phase === "syncing" ? "Sincronizando projeto…" : phase === "enhancing" ? "Aprimorando seu pedido…" : phase === "searching" ? "Pesquisando na web…" : phase === "responding" ? "Respondendo em tempo real…" : "Agent Coding"}</div>
+          <span className="privacy-label">{phase === "enhancing" ? "Etapa 1 de 2 · Refinamento com IA" : phase === "searching" ? "Busca Tavily" : phase === "responding" ? "Etapa 2 de 2 · Prompt master" : "Arquivos locais"}</span>
         </div>
         <div className="messages" ref={scrollRef}>
           {!rootHandle && (

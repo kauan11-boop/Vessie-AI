@@ -10,7 +10,7 @@
 //  - delete_file   { path }                  (precisa de aprovação)
 
 const ACTION_FENCE = String.fromCharCode(96, 96, 96) + "agent";
-const READ_ONLY = new Set(["list_dir", "read_file"]);
+const READ_ONLY = new Set(["list_dir", "read_file", "web_search"]);
 const WRITE_TYPES = new Set(["write_file", "create_file", "delete_file"]);
 const ALL_TYPES = new Set([...READ_ONLY, ...WRITE_TYPES]);
 
@@ -73,6 +73,10 @@ export function extractActions(text) {
       if (!Array.isArray(parsed.actions)) continue;
       for (const action of parsed.actions) {
         if (!action || !ALL_TYPES.has(action.type)) continue;
+        if (action.type === "web_search") {
+          if (typeof action.query === "string" && action.query.trim()) actions.push(action);
+          continue;
+        }
         const normalized = action.type === "list_dir" && action.path == null
           ? { ...action, path: "" }
           : action;
@@ -103,4 +107,11 @@ export function stripActionBlocks(text) {
   return findActionBlocks(text)
     .reduceRight((visible, block) => visible.slice(0, block.start) + visible.slice(block.end), text)
     .trim();
+}
+
+export function stripStreamingActionBlocks(text) {
+  const lastStart = text.lastIndexOf(ACTION_FENCE);
+  if (lastStart < 0) return stripActionBlocks(text);
+  const isComplete = findActionBlocks(text).some((block) => block.start === lastStart);
+  return isComplete ? stripActionBlocks(text) : text.slice(0, lastStart).trim();
 }

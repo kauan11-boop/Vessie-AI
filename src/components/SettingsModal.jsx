@@ -50,7 +50,7 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
           <button type="button" className="icon-btn close-btn" onClick={onClose} aria-label="Fechar configurações">×</button>
         </div>
         <p className="settings-description">
-          Conecte um endpoint compatível com chat completions. O teste envia uma mensagem real ao modelo selecionado; confirme também que ele está carregado no servidor e que o navegador tem acesso à URL.
+          Conecte um endpoint compatível com chat completions. O nível de raciocínio depende do suporte do provedor. A chave Tavily e as consultas de busca são enviadas do navegador diretamente à Tavily.
         </p>
 
         <div className="field">
@@ -91,6 +91,21 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
           </datalist>
         </div>
 
+        <div className="field">
+          <label htmlFor="reasoning-effort">Raciocínio do modelo</label>
+          <select
+            id="reasoning-effort"
+            value={form.reasoningEffort || ""}
+            onChange={(event) => update("reasoningEffort", event.target.value)}
+          >
+            <option value="">Padrão do modelo</option>
+            <option value="low">Baixo</option>
+            <option value="medium">Médio</option>
+            <option value="high">Alto</option>
+          </select>
+          <span className="field-hint">Envia reasoning_effort; alguns endpoints/modelos não aceitam esse parâmetro.</span>
+        </div>
+
         <div className="field temperature-field">
           <label htmlFor="temperature">Criatividade <strong>{Number(form.temperature).toFixed(2)}</strong></label>
           <input
@@ -101,8 +116,22 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
             step="0.05"
             value={form.temperature}
             onChange={(event) => update("temperature", Number(event.target.value))}
+            disabled={Boolean(form.reasoningEffort)}
           />
           <div className="range-labels"><span>Mais preciso</span><span>Mais criativo</span></div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="tavily-key">Chave Tavily <span>(opcional)</span></label>
+          <input
+            id="tavily-key"
+            type="password"
+            value={form.webSearchApiKey || ""}
+            onChange={(event) => update("webSearchApiKey", event.target.value)}
+            placeholder="Cole sua chave de busca Tavily"
+            autoComplete="new-password"
+          />
+          <span className="field-hint">Salva apenas neste navegador. As consultas e a chave vão diretamente para Tavily; sem chave, a busca fica desativada.</span>
         </div>
 
         {connection.message && (

@@ -8,6 +8,8 @@ const DEFAULT_SETTINGS = {
   apiKey: "",
   model: "local-model",
   temperature: 0.4,
+  reasoningEffort: "",
+  webSearchApiKey: "",
 };
 
 const STORAGE_KEY = "vessie-agent-settings";
@@ -44,6 +46,17 @@ export function formatAIError(error, baseUrl = loadSettings().baseUrl) {
   return `Não foi possível concluir a solicitação à IA: ${message}`;
 }
 
+function buildChatPayload(settings, messages, stream) {
+  return {
+    model: settings.model,
+    messages,
+    stream,
+    ...(settings.reasoningEffort
+      ? { reasoning_effort: settings.reasoningEffort }
+      : { temperature: Number(settings.temperature ?? 0.4) }),
+  };
+}
+
 export async function testModel(settings) {
   const url = `${settings.baseUrl.replace(/\/$/, "")}/chat/completions`;
   const response = await fetch(url, {
@@ -52,12 +65,7 @@ export async function testModel(settings) {
       "Content-Type": "application/json",
       ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
     },
-    body: JSON.stringify({
-      model: settings.model,
-      messages: [{ role: "user", content: "Responda somente OK." }],
-      temperature: 0,
-      stream: false,
-    }),
+    body: JSON.stringify(buildChatPayload(settings, [{ role: "user", content: "Responda somente OK." }], false)),
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
@@ -67,6 +75,42 @@ export async function testModel(settings) {
   const answer = result.choices?.[0]?.message?.content;
   if (typeof answer !== "string") throw new Error("O servidor respondeu sem conteúdo. Confira se o modelo está carregado e é compatível com chat completions.");
   return answer.trim();
+}
+
+export async function searchWeb(query, signal, settings = loadSettings()) {
+  const apiKey = settings.webSearchApiKey?.trim();
+  if (!apiKey) throw new Error("A busca web está desativada. Adicione uma chave Tavily nas Configurações.");
+
+  let response;
+  try {
+    response = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        query,
+        search_depth: "basic",
+        max_results: 5,
+        include_answer: false,
+        include_raw_content: false,
+      }),
+    });
+  } catch (error) {
+    if (error.name === "AbortError") throw error;
+    throw new Error(`Não foi possível acessar a busca Tavily. Confira a conexão e se o serviço permite chamadas CORS do navegador. ${error.message}`);
+  }
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`A busca Tavily recusou a solicitação (${response.status}): ${detail || response.statusText}`);
+  }
+
+  const result = await response.json();
+  const sources = (Array.isArray(result.results) ? result.results : []).map((item, index) =>
+    `${index + 1}. ${item.title || "Sem título"}\nURL: ${item.url || ""}\nResumo: ${(item.content || "").slice(0, 1800)}`
+  );
+  return sources.length ? sources.join("\n\n") : "A busca não encontrou resultados relevantes.";
 }
 
 export async function listModels(settings) {
@@ -99,12 +143,7 @@ export async function streamChat(messages, onToken, signal) {
       "Content-Type": "application/json",
       ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
     },
-    body: JSON.stringify({
-      model: settings.model,
-      messages,
-      temperature: Number(settings.temperature ?? 0.4),
-      stream: true,
-    }),
+    body: JSON.stringify(buildChatPayload(settings, messages, true)),
   });
 
   if (!res.ok || !res.body) {
@@ -163,12 +202,7 @@ export async function chatOnce(messages, signal) {
       "Content-Type": "application/json",
       ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
     },
-    body: JSON.stringify({
-      model: settings.model,
-      messages,
-      temperature: Number(settings.temperature ?? 0.4),
-      stream: false,
-    }),
+    body: JSON.stringify(buildChatPayload(settings, messages, false)),
   });
 
   if (!res.ok) {
