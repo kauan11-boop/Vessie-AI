@@ -106,6 +106,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .connection-heading { display: flex; align-items: center; gap: 7px; color: var(--text-soft); font-size: 8px; font-weight: 700; letter-spacing: .1em; }
 .connection-mark { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 10px rgba(167,139,250,.3); }
 .presence-dot, .context-dot { width: 6px; height: 6px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 10px rgba(167,139,250,.3); }
+.presence-dot.working { animation: pulse .8s ease-in-out infinite alternate; }
 .connection-model { margin-top: 10px; color: #d8d4e3; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .connection-endpoint { margin-top: 4px; color: var(--text-soft); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .settings-btn {

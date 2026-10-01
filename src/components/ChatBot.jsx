@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Message from "./Message.jsx";
-import { streamChat } from "../lib/aiClient.js";
+import { formatAIError, streamChat } from "../lib/aiClient.js";
+import { enhanceTaskPrompt } from "../lib/promptEnhancer.js";
 import { buildChatbotSystemPrompt } from "../lib/systemPrompts.js";
 
 const STORAGE_KEY = "vessie-agent-conversations";
@@ -51,6 +52,7 @@ export default function ChatBot() {
   const [workspace, setWorkspace] = useState(loadWorkspace);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState("idle");
   const scrollRef = useRef(null);
   const abortRef = useRef(null);
   const activeConversation =
@@ -136,12 +138,24 @@ export default function ChatBot() {
 
     const controller = new AbortController();
     abortRef.current = controller;
-    const payload = [
-      { role: "system", content: buildChatbotSystemPrompt() },
-      ...nextMessages,
-    ];
-
     try {
+      setPhase("enhancing");
+      const enhancedPrompt = await enhanceTaskPrompt({
+        request: text,
+        mode: "chat",
+        context: "Assistente geral; sem arquivos anexados.",
+        history: nextMessages.slice(0, -1).slice(-8).map((item) => ({
+          role: item.role,
+          content: item.content.slice(-3000),
+        })),
+        signal: controller.signal,
+      });
+      setPhase("responding");
+      const payload = [
+        { role: "system", content: buildChatbotSystemPrompt() },
+        ...nextMessages.slice(0, -1),
+        { role: "user", content: enhancedPrompt },
+      ];
       let response = "";
       await streamChat(
         payload,
@@ -161,7 +175,7 @@ export default function ChatBot() {
           const updated = [...messages];
           updated[updated.length - 1] = {
             role: "assistant",
-            content: `Não foi possível falar com a IA. ${error.message}`,
+            content: formatAIError(error),
           };
           return updated;
         });
@@ -170,6 +184,7 @@ export default function ChatBot() {
       if (abortRef.current === controller) {
         abortRef.current = null;
         setBusy(false);
+        setPhase("idle");
       }
     }
   }
@@ -179,6 +194,7 @@ export default function ChatBot() {
     abortRef.current.abort();
     abortRef.current = null;
     setBusy(false);
+    setPhase("idle");
     updateMessages((messages) => {
       const updated = [...messages];
       const last = updated[updated.length - 1];
@@ -241,9 +257,9 @@ export default function ChatBot() {
 
       <section className="chat-col">
         <div className="chat-toolbar">
-          <div className="assistant-presence"><span className="presence-dot" /> Vessie AI <span className="toolbar-divider">/</span> Assistente
+          <div className="assistant-presence"><span className={`presence-dot ${phase !== "idle" ? "working" : ""}`} /> Vessie AI <span className="toolbar-divider">/</span> {phase === "enhancing" ? "Aprimorando seu pedido…" : phase === "responding" ? "Preparando resposta…" : "Assistente"}
           </div>
-          <span className="privacy-label">Privado neste dispositivo</span>
+          <span className="privacy-label">{phase === "enhancing" ? "Etapa 1 de 2 · Refinamento com IA" : phase === "responding" ? "Etapa 2 de 2 · Resposta do modelo" : "Privado neste dispositivo"}</span>
         </div>
         <div className="messages" ref={scrollRef}>
           {activeConversation.messages.length === 0 && (

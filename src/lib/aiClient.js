@@ -26,6 +26,15 @@ export function saveSettings(settings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
+export function formatAIError(error) {
+  if (error?.name === "AbortError") return "Operação interrompida.";
+  const message = error?.message || "Erro desconhecido";
+  if (/failed to fetch|networkerror|load failed|fetch failed|err_connection/i.test(message)) {
+    return `Não foi possível conectar ao modelo em ${loadSettings().baseUrl}. Confirme que o servidor está ativo e permite conexões do navegador (CORS).`;
+  }
+  return `Não foi possível concluir a solicitação à IA: ${message}`;
+}
+
 export async function listModels(settings) {
   const url = `${settings.baseUrl.replace(/\/$/, "")}/models`;
   const response = await fetch(url, {

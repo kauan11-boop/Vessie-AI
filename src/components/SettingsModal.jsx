@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { listModels, saveSettings } from "../lib/aiClient.js";
+import { formatAIError, listModels, saveSettings } from "../lib/aiClient.js";
 
 export default function SettingsModal({ settings, onClose, onSaved }) {
   const [form, setForm] = useState(settings);
@@ -23,7 +23,7 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
           : "Endpoint conectado. Digite o identificador do modelo.",
       });
     } catch (error) {
-      setConnection({ state: "error", message: error.message });
+      setConnection({ state: "error", message: formatAIError(error) });
     }
   }
 

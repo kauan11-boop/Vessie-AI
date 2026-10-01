@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Message from "./Message.jsx";
 import FileTree from "./FileTree.jsx";
-import { chatOnce } from "../lib/aiClient.js";
+import { chatOnce, formatAIError } from "../lib/aiClient.js";
+import { enhanceTaskPrompt } from "../lib/promptEnhancer.js";
 import { buildAgentSystemPrompt } from "../lib/systemPrompts.js";
 import {
   isSupported,
@@ -27,6 +28,7 @@ export default function AgentCoding() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState("idle");
   const [syncing, setSyncing] = useState(false);
   const [applying, setApplying] = useState(false);
   const [pending, setPending] = useState([]);
@@ -211,15 +213,18 @@ export default function AgentCoding() {
     abortRef.current = controller;
     const selectedPath = activePath;
     const selectedReadId = activeReadRef.current;
+    let selectedContent = activeContent;
     let currentTree;
     syncingRef.current = true;
     setSyncing(true);
+    setPhase("syncing");
     try {
       currentTree = await buildTree(rootHandle);
       setTree(currentTree);
       if (selectedPath && selectedReadId === activeReadRef.current) {
         try {
           const content = await readFile(rootHandle, selectedPath);
+          selectedContent = content;
           if (selectedReadId === activeReadRef.current) setActiveContent(content);
         } catch (error) {
           if (selectedReadId === activeReadRef.current && error.name === "NotFoundError") {
@@ -235,34 +240,55 @@ export default function AgentCoding() {
       }
       abortRef.current = null;
       setBusy(false);
+      setPhase("idle");
       return;
     } finally {
       syncingRef.current = false;
       setSyncing(false);
+      setPhase("idle");
     }
     if (controller.signal.aborted) {
       abortRef.current = null;
       setBusy(false);
+      setPhase("idle");
       return;
     }
 
-    const treeLines = flattenTree(currentTree).join("\n");
+    const treeLines = flattenTree(currentTree).slice(0, 160).join("\n");
     const pendingSummary = pending.map((item) => `- ${item.type}: ${item.path}`).join("\n");
     const history = [...messages, { role: "user", content: text }];
     setMessages(history);
     scrollToBottom();
 
-    let conversation = [
-      { role: "system", content: buildAgentSystemPrompt(treeLines, pendingSummary) },
-      ...history
-        .filter((message) => message.role !== "system" || message.context === "tool")
-        .map((message) => ({
-          role: message.context === "tool" ? "user" : message.role,
-          content: message.protocolContent ?? message.content,
-        })),
-    ];
-
     try {
+      setPhase("enhancing");
+      const selectedFileContext = selectedPath
+        ? `${selectedPath}\n${selectedContent.slice(0, 12000)}`
+        : "";
+      const enhancedPrompt = await enhanceTaskPrompt({
+        request: text,
+        mode: "agent",
+        context: { tree: treeLines, selectedFile: selectedFileContext, pending: pendingSummary },
+        history: history
+          .slice(0, -1)
+          .filter((message) => message.role === "user" || message.role === "assistant")
+          .slice(-8)
+          .map((message) => ({ role: message.role, content: (message.protocolContent ?? message.content).slice(-3000) })),
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setPhase("responding");
+      let conversation = [
+        { role: "system", content: buildAgentSystemPrompt(treeLines, pendingSummary, selectedFileContext) },
+        ...history
+          .slice(0, -1)
+          .filter((message) => message.role !== "system" || message.context === "tool")
+          .map((message) => ({
+            role: message.context === "tool" ? "user" : message.role,
+            content: message.protocolContent ?? message.content,
+          })),
+        { role: "user", content: enhancedPrompt },
+      ];
       let awaitingFinalAnswer = false;
       for (let round = 0; round < MAX_AUTO_ROUNDS; round++) {
         if (controller.signal.aborted) break;
@@ -331,13 +357,14 @@ export default function AgentCoding() {
       if (err.name !== "AbortError") {
         setMessages((prev) => [
           ...prev,
-          { role: "system", content: `Erro ao falar com a IA: ${err.message}` },
+          { role: "system", content: formatAIError(err) },
         ]);
       }
     } finally {
       if (abortRef.current === controller) {
         abortRef.current = null;
         setBusy(false);
+        setPhase("idle");
       }
     }
   }
@@ -392,6 +419,10 @@ export default function AgentCoding() {
       </div>
 
       <div className="chat-col">
+        <div className="chat-toolbar">
+          <div className="assistant-presence"><span className={`presence-dot ${phase !== "idle" ? "working" : ""}`} /> Vessie AI <span className="toolbar-divider">/</span> {phase === "syncing" ? "Sincronizando projeto…" : phase === "enhancing" ? "Aprimorando seu pedido…" : phase === "responding" ? "Analisando e preparando alterações…" : "Agent Coding"}</div>
+          <span className="privacy-label">{phase === "enhancing" ? "Etapa 1 de 2 · Refinamento com IA" : phase === "responding" ? "Etapa 2 de 2 · Execução do pedido" : "Arquivos locais"}</span>
+        </div>
         <div className="messages" ref={scrollRef}>
           {!rootHandle && (
             <div className="agent-welcome">
