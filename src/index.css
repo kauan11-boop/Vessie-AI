@@ -319,6 +319,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .pick-folder-btn { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; padding: 9px 10px; overflow: hidden; border: 1px solid rgba(167,139,250,.25); border-radius: 7px; background: rgba(139,92,246,.105); color: #d6c9fa; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 550; transition: .18s ease; }
 .pick-folder-btn:hover:not(:disabled) { border-color: rgba(167,139,250,.48); background: rgba(139,92,246,.17); }
 .pick-folder-btn:disabled { cursor: wait; opacity: .5; }
+.standalone-folder-link { text-align: center; text-decoration: none; }
+.standalone-folder-link:hover { color: white; }
 .pick-folder-btn span { font-size: 13px; }
 .folder-sync-status { display: flex; align-items: center; gap: 7px; min-height: 22px; padding: 0 2px; color: #7f7b89; font-size: 9px; }
 .folder-sync-dot { width: 5px; height: 5px; flex: 0 0 5px; border-radius: 50%; background: #65c79a; box-shadow: 0 0 8px rgba(101,199,154,.28); }
@@ -345,6 +347,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .agent-welcome .welcome-orb { font-family: inherit; font-size: 20px; }
 .agent-welcome h2 { font-size: clamp(27px, 2.7vw, 36px); }
 .agent-welcome > p { max-width: 360px; }
+.agent-welcome .standalone-folder-link { width: fit-content; max-width: 100%; white-space: normal; }
 .welcome-folder-btn { width: fit-content; margin: 22px auto 0; padding: 11px 15px; }
 .agent-privacy-note { display: block; margin-top: 11px; color: #75727f; font-size: 9px; }
 .split > .chat-col > .composer { margin: 0 clamp(12px, 2vw, 24px) 13px; padding: 7px; }

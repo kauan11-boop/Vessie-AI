@@ -26,13 +26,47 @@ export function saveSettings(settings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
-export function formatAIError(error) {
+export function formatAIError(error, baseUrl = loadSettings().baseUrl) {
   if (error?.name === "AbortError") return "Operação interrompida.";
   const message = error?.message || "Erro desconhecido";
   if (/failed to fetch|networkerror|load failed|fetch failed|err_connection/i.test(message)) {
-    return `Não foi possível conectar ao modelo em ${loadSettings().baseUrl}. Confirme que o servidor está ativo e permite conexões do navegador (CORS).`;
+    return `Não foi possível conectar ao modelo em ${baseUrl || "(URL vazia)"}. Confirme a URL, que o servidor e o modelo estão ativos e que o navegador tem permissão de conexão (CORS).`;
+  }
+  if (/\b(401|403)\b/.test(message)) {
+    return `A API recusou a autenticação em ${baseUrl}. Confira a chave de API nas Configurações.`;
+  }
+  if (/\b404\b/.test(message)) {
+    return `O endpoint ou modelo não foi encontrado em ${baseUrl}. Confira a URL base e o identificador exato do modelo.`;
+  }
+  if (/\b(400|422)\b/.test(message)) {
+    return `O servidor recusou o pedido para o modelo configurado. Confira o identificador e os parâmetros do modelo. Detalhe: ${message}`;
   }
   return `Não foi possível concluir a solicitação à IA: ${message}`;
+}
+
+export async function testModel(settings) {
+  const url = `${settings.baseUrl.replace(/\/$/, "")}/chat/completions`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
+    },
+    body: JSON.stringify({
+      model: settings.model,
+      messages: [{ role: "user", content: "Responda somente OK." }],
+      temperature: 0,
+      stream: false,
+    }),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Falha na requisição (${response.status}): ${detail || response.statusText}`);
+  }
+  const result = await response.json();
+  const answer = result.choices?.[0]?.message?.content;
+  if (typeof answer !== "string") throw new Error("O servidor respondeu sem conteúdo. Confira se o modelo está carregado e é compatível com chat completions.");
+  return answer.trim();
 }
 
 export async function listModels(settings) {

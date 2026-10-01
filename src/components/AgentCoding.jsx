@@ -5,6 +5,7 @@ import { chatOnce, formatAIError } from "../lib/aiClient.js";
 import { enhanceTaskPrompt } from "../lib/promptEnhancer.js";
 import { buildAgentSystemPrompt } from "../lib/systemPrompts.js";
 import {
+  isCrossOriginEmbedded,
   isSupported,
   pickDirectory,
   ensurePermission,
@@ -21,6 +22,9 @@ import { extractActions, hasActionBlock, isReadOnly, stripActionBlocks } from ".
 const MAX_AUTO_ROUNDS = 3;
 
 export default function AgentCoding() {
+  const embedded = isCrossOriginEmbedded();
+  const standaloneUrl = typeof window === "undefined" ? "" : new URL(window.location.href);
+  if (standaloneUrl) standaloneUrl.searchParams.set("mode", "agent");
   const [rootHandle, setRootHandle] = useState(null);
   const [tree, setTree] = useState(null);
   const [activePath, setActivePath] = useState(null);
@@ -32,6 +36,7 @@ export default function AgentCoding() {
   const [syncing, setSyncing] = useState(false);
   const [applying, setApplying] = useState(false);
   const [pending, setPending] = useState([]);
+  const [pickerBlocked, setPickerBlocked] = useState(false);
   const scrollRef = useRef(null);
   const abortRef = useRef(null);
   const activeReadRef = useRef(0);
@@ -66,9 +71,13 @@ export default function AgentCoding() {
       ]);
     } catch (error) {
       if (error?.name !== "AbortError") {
+        const blockedByFrame = /cross.origin|cross origin|sub frames/i.test(error.message);
+        if (blockedByFrame) setPickerBlocked(true);
         setMessages((current) => [
           ...current,
-          { role: "system", content: `Não foi possível selecionar a pasta: ${error.message}` },
+          { role: "system", content: blockedByFrame
+            ? "O navegador bloqueou o seletor de pastas dentro do preview. Abra o Agent Coding em uma aba própria e tente novamente."
+            : `Não foi possível selecionar a pasta: ${error.message}` },
         ]);
       }
     }
@@ -376,7 +385,7 @@ export default function AgentCoding() {
     }
   }
 
-  if (!isSupported()) {
+  if (!isSupported() && !embedded) {
     return (
       <div className="empty-hint" style={{ margin: "auto" }}>
         Seu navegador não suporta a File System Access API. Use Chrome, Edge,
@@ -393,9 +402,15 @@ export default function AgentCoding() {
             <span className="section-kicker">WORKSPACE</span>
             <h2>Arquivos do projeto</h2>
           </div>
-          <button className="pick-folder-btn" onClick={handlePickFolder} disabled={busy || syncing || applying}>
-            <span aria-hidden="true">＋</span> {rootHandle ? rootHandle.name : "Selecionar pasta"}
-          </button>
+          {embedded || pickerBlocked ? (
+            <a className="pick-folder-btn standalone-folder-link" href={standaloneUrl.href} target="_blank" rel="noopener noreferrer">
+              Abrir Agent Coding em uma aba própria ↗
+            </a>
+          ) : (
+            <button className="pick-folder-btn" onClick={handlePickFolder} disabled={busy || syncing || applying}>
+              <span aria-hidden="true">＋</span> {rootHandle ? rootHandle.name : "Selecionar pasta"}
+            </button>
+          )}
           {rootHandle && (
             <div className={`folder-sync-status ${syncing ? "syncing" : ""}`}>
               <span className="folder-sync-dot" />
@@ -429,8 +444,14 @@ export default function AgentCoding() {
               <div className="welcome-orb" aria-hidden="true"><span>⌘</span></div>
               <span className="section-kicker">AGENTE DE DESENVOLVIMENTO</span>
               <h2>Seu próximo projeto,<br />em boas mãos.</h2>
-              <p>Escolha uma pasta para começar. A IA analisa seus arquivos e propõe alterações para sua aprovação.</p>
-              <button className="pick-folder-btn welcome-folder-btn" onClick={handlePickFolder} disabled={busy || syncing || applying}>＋ Selecionar pasta do projeto</button>
+              <p>{embedded || pickerBlocked ? "O navegador bloqueia a seleção de pastas dentro deste preview incorporado. Abra o Agent Coding em uma aba própria para conceder acesso aos seus arquivos." : "Escolha uma pasta para começar. A IA analisa seus arquivos e propõe alterações para sua aprovação."}</p>
+              {embedded || pickerBlocked ? (
+                <a className="pick-folder-btn welcome-folder-btn standalone-folder-link" href={standaloneUrl.href} target="_blank" rel="noopener noreferrer">
+                  Abrir em uma aba própria ↗
+                </a>
+              ) : (
+                <button className="pick-folder-btn welcome-folder-btn" onClick={handlePickFolder} disabled={busy || syncing || applying}>＋ Selecionar pasta do projeto</button>
+              )}
               <span className="agent-privacy-note">Seus arquivos permanecem no dispositivo.</span>
             </div>
           )}

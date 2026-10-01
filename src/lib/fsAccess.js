@@ -4,6 +4,15 @@ export function isSupported() {
   return typeof window !== "undefined" && "showDirectoryPicker" in window;
 }
 
+export function isCrossOriginEmbedded() {
+  if (typeof window === "undefined" || window.self === window.top) return false;
+  try {
+    return window.parent.location.origin !== window.location.origin;
+  } catch {
+    return true;
+  }
+}
+
 export async function ensurePermission(handle, mode = "read", request = false) {
   if (!handle.queryPermission) return;
   const options = { mode };

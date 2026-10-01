@@ -6,7 +6,7 @@ import SettingsModal from "./components/SettingsModal.jsx";
 import { loadSettings } from "./lib/aiClient.js";
 
 export default function App() {
-  const [mode, setMode] = useState("chatbot"); // "chatbot" | "agent"
+  const [mode, setMode] = useState(() => new URLSearchParams(window.location.search).get("mode") === "agent" ? "agent" : "chatbot");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState(loadSettings());
 

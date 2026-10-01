@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatAIError, listModels, saveSettings } from "../lib/aiClient.js";
+import { formatAIError, listModels, saveSettings, testModel } from "../lib/aiClient.js";
 
 export default function SettingsModal({ settings, onClose, onSaved }) {
   const [form, setForm] = useState(settings);
@@ -12,18 +12,22 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
   }
 
   async function testConnection() {
-    setConnection({ state: "loading", message: "Verificando o endpoint…" });
+    setConnection({ state: "loading", message: "Enviando uma mensagem de teste ao modelo…" });
     try {
-      const models = await listModels(form);
+      const answer = await testModel(form);
+      let models = [];
+      try {
+        models = await listModels(form);
+      } catch {
+        models = [];
+      }
       setAvailableModels(models);
       setConnection({
         state: "success",
-        message: models.length
-          ? `Conexão ativa · ${models.length} ${models.length === 1 ? "modelo encontrado" : "modelos encontrados"}`
-          : "Endpoint conectado. Digite o identificador do modelo.",
+        message: `O modelo “${form.model}” respondeu${answer ? `: ${answer.slice(0, 72)}` : "."}${models.length ? ` · ${models.length} modelos disponíveis` : " · catálogo de modelos indisponível"}`,
       });
     } catch (error) {
-      setConnection({ state: "error", message: formatAIError(error) });
+      setConnection({ state: "error", message: formatAIError(error, form.baseUrl) });
     }
   }
 
@@ -46,7 +50,7 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
           <button type="button" className="icon-btn close-btn" onClick={onClose} aria-label="Fechar configurações">×</button>
         </div>
         <p className="settings-description">
-          Conecte qualquer serviço compatível com a API da OpenAI. As configurações ficam salvas somente neste navegador.
+          Conecte um endpoint compatível com chat completions. O teste envia uma mensagem real ao modelo selecionado; confirme também que ele está carregado no servidor e que o navegador tem acesso à URL.
         </p>
 
         <div className="field">
@@ -58,7 +62,7 @@ export default function SettingsModal({ settings, onClose, onSaved }) {
             placeholder="http://localhost:1234/v1"
             autoComplete="url"
           />
-          <span className="field-hint">LM Studio local: http://localhost:1234/v1</span>
+          <span className="field-hint">No LM Studio, inicie o Local Server. Em preview incorporado, localhost aponta para o dispositivo que abriu esta página.</span>
         </div>
 
         <div className="field">
