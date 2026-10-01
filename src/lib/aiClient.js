@@ -26,6 +26,19 @@ export function saveSettings(settings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
+export async function listModels(settings) {
+  const url = `${settings.baseUrl.replace(/\/$/, "")}/models`;
+  const response = await fetch(url, {
+    headers: settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {},
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Falha na conexão (${response.status}): ${detail || response.statusText}`);
+  }
+  const result = await response.json();
+  return Array.isArray(result.data) ? result.data.map((model) => model.id).filter(Boolean) : [];
+}
+
 /**
  * Envia uma conversa para o backend e transmite os pedaços de texto conforme chegam.
  * @param {Array<{role:string, content:string}>} messages
@@ -63,11 +76,15 @@ export async function streamChat(messages, onToken, signal) {
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+    if (done) {
+      buffer += decoder.decode();
+      if (buffer.trim()) buffer += "\n";
+    } else {
+      buffer += decoder.decode(value, { stream: true });
+    }
 
     const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
+    buffer = done ? "" : lines.pop() ?? "";
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -85,6 +102,7 @@ export async function streamChat(messages, onToken, signal) {
         // linha incompleta ou não-JSON: ignora
       }
     }
+    if (done) break;
   }
 
   return full;

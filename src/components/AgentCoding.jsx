@@ -25,8 +25,9 @@ export default function AgentCoding() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState([]); // { id, type, path, content }
+  const [pending, setPending] = useState([]);
   const scrollRef = useRef(null);
+  const abortRef = useRef(null);
 
   function scrollToBottom() {
     requestAnimationFrame(() => {
@@ -35,11 +36,15 @@ export default function AgentCoding() {
   }
 
   async function handlePickFolder() {
+    if (pending.length && !window.confirm("Trocar de pasta descartará as mudanças pendentes. Deseja continuar?")) return;
     try {
       const handle = await pickDirectory();
-      setRootHandle(handle);
       const t = await buildTree(handle);
+      setRootHandle(handle);
       setTree(t);
+      setActivePath(null);
+      setActiveContent("");
+      setPending([]);
       setMessages([
         {
           role: "system",
@@ -85,7 +90,12 @@ export default function AgentCoding() {
       }
       setPending((prev) => prev.filter((p) => p.id !== item.id));
       await refreshTree();
-      if (activePath === item.path) await handleSelectFile(item.path);
+      if (activePath === item.path && item.type === "delete_file") {
+        setActivePath(null);
+        setActiveContent("");
+      } else if (activePath === item.path) {
+        await handleSelectFile(item.path);
+      }
       setMessages((prev) => [
         ...prev,
         { role: "system", content: `✅ Aplicado: ${item.type} → ${item.path}` },
@@ -134,9 +144,12 @@ export default function AgentCoding() {
       ...history.filter((m) => m.role !== "system"),
     ];
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       for (let round = 0; round < MAX_AUTO_ROUNDS; round++) {
-        const reply = await chatOnce(conversation);
+        const reply = await chatOnce(conversation, controller.signal);
         const actions = extractActions(reply);
         const visibleText = stripActionBlocks(reply) || "(sem texto, apenas ações)";
 
@@ -161,12 +174,17 @@ export default function AgentCoding() {
         scrollToBottom();
       }
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "system", content: `⚠️ Erro ao falar com a IA: ${err.message}` },
-      ]);
+      if (err.name !== "AbortError") {
+        setMessages((prev) => [
+          ...prev,
+          { role: "system", content: `Erro ao falar com a IA: ${err.message}` },
+        ]);
+      }
     } finally {
-      setBusy(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setBusy(false);
+      }
     }
   }
 
@@ -190,20 +208,27 @@ export default function AgentCoding() {
     <div className="split">
       <div className="files-col">
         <div className="files-header">
-          <button className="pick-folder-btn" onClick={handlePickFolder}>
-            {rootHandle ? `📂 ${rootHandle.name}` : "Selecionar pasta do projeto"}
+          <div className="column-heading">
+            <span className="section-kicker">WORKSPACE</span>
+            <h2>Arquivos do projeto</h2>
+          </div>
+          <button className="pick-folder-btn" onClick={handlePickFolder} disabled={busy}>
+            <span aria-hidden="true">＋</span> {rootHandle ? rootHandle.name : "Selecionar pasta"}
           </button>
           {rootHandle && (
-            <button className="ghost-btn" onClick={refreshTree}>
-              🔄 Atualizar árvore
+            <button className="refresh-tree-btn" onClick={refreshTree}>
+              <span aria-hidden="true">↻</span> Atualizar arquivos
             </button>
           )}
         </div>
         <FileTree tree={tree} activePath={activePath} onSelectFile={handleSelectFile} />
         {activePath && (
-          <div style={{ borderTop: "1px solid var(--border)", padding: 10, maxHeight: 200, overflow: "auto" }}>
-            <div className="hint-small" style={{ marginBottom: 6 }}>{activePath}</div>
-            <pre style={{ fontSize: 11, margin: 0, whiteSpace: "pre-wrap" }}>{activeContent}</pre>
+          <div className="file-preview">
+            <div className="file-preview-heading">
+              <span className="file-preview-name" title={activePath}>{activePath}</span>
+              <span>{activeContent.split("\n").length} linhas</span>
+            </div>
+            <pre>{activeContent}</pre>
           </div>
         )}
       </div>
@@ -211,9 +236,13 @@ export default function AgentCoding() {
       <div className="chat-col">
         <div className="messages" ref={scrollRef}>
           {!rootHandle && (
-            <div className="empty-hint">
-              Selecione uma pasta do seu computador para a IA poder ler e
-              editar os arquivos dela.
+            <div className="agent-welcome">
+              <div className="welcome-orb" aria-hidden="true"><span>⌘</span></div>
+              <span className="section-kicker">AGENTE DE DESENVOLVIMENTO</span>
+              <h2>Seu próximo projeto,<br />em boas mãos.</h2>
+              <p>Escolha uma pasta para começar. A IA analisa seus arquivos e propõe alterações para sua aprovação.</p>
+              <button className="pick-folder-btn welcome-folder-btn" onClick={handlePickFolder}>＋ Selecionar pasta do projeto</button>
+              <span className="agent-privacy-note">Seus arquivos permanecem no dispositivo.</span>
             </div>
           )}
           {messages.map((m, i) => (
@@ -232,22 +261,29 @@ export default function AgentCoding() {
             }
             disabled={!rootHandle}
           />
-          <button className="send-btn" onClick={handleSend} disabled={busy || !input.trim() || !rootHandle}>
-            {busy ? "..." : "Enviar"}
-          </button>
+          {busy ? (
+            <button className="stop-btn" onClick={() => abortRef.current?.abort()} aria-label="Interromper execução">
+              <span className="stop-square" /> Parar
+            </button>
+          ) : (
+            <button className="send-btn" onClick={handleSend} disabled={!input.trim() || !rootHandle}>
+              <span>Enviar</span><span className="send-arrow">↑</span>
+            </button>
+          )}
         </div>
       </div>
 
       <div className="pending-col">
         <div className="pending-header">
-          <span>Mudanças pendentes</span>
-          <span>{pending.length}</span>
+          <div><span className="section-kicker">REVISÃO</span><h2>Mudanças</h2></div>
+          <span className="pending-count">{pending.length}</span>
         </div>
         <div className="pending-list">
           {pending.length === 0 && (
-            <div className="empty-hint">
-              Quando a IA propor criar, editar ou apagar um arquivo, a
-              mudança aparece aqui para você aprovar.
+            <div className="pending-empty">
+              <span className="pending-empty-icon" aria-hidden="true">✓</span>
+              <strong>Tudo em dia</strong>
+              <span>As alterações propostas pela IA aparecerão aqui para revisão antes de serem aplicadas.</span>
             </div>
           )}
           {pending.map((item) => (
@@ -255,7 +291,7 @@ export default function AgentCoding() {
               <span className={`action-tag ${item.type}`}>{item.type}</span>
               <div className="path">{item.path}</div>
               {item.type !== "delete_file" && (
-                <pre>{item.content}</pre>
+                <pre className="pending-preview">{item.content}</pre>
               )}
               <div className="pending-actions">
                 <button className="apply" onClick={() => applyPending(item)}>

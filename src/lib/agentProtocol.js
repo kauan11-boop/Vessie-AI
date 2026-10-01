@@ -23,9 +23,9 @@ export function extractActions(text) {
       const parsed = JSON.parse(match[1].trim());
       const list = Array.isArray(parsed.actions) ? parsed.actions : [];
       for (const a of list) {
-        if (a && ALL_TYPES.has(a.type) && typeof a.path === "string") {
-          actions.push(a);
-        }
+        if (!a || !ALL_TYPES.has(a.type) || typeof a.path !== "string") continue;
+        if ((a.type === "write_file" || a.type === "create_file") && typeof a.content !== "string") continue;
+        actions.push(a);
       }
     } catch {
       // bloco mal formado: ignora silenciosamente, a IA tentará de novo

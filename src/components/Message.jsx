@@ -1,16 +1,14 @@
 import React from "react";
 
-// Divide o texto em pedaços de texto normal e blocos de código ```lang ... ```
-// para exibição simples, sem trazer uma dependência de markdown inteira.
 function splitCodeBlocks(text) {
   const parts = [];
-  const re = /```(\w*)\n?([\s\S]*?)```/g;
+  const pattern = /```([\w-]*)\n?([\s\S]*?)```/g;
   let last = 0;
-  let m;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index > last) parts.push({ type: "text", value: text.slice(last, m.index) });
-    parts.push({ type: "code", lang: m[1], value: m[2] });
-    last = m.index + m[0].length;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > last) parts.push({ type: "text", value: text.slice(last, match.index) });
+    parts.push({ type: "code", lang: match[1], value: match[2] });
+    last = match.index + match[0].length;
   }
   if (last < text.length) parts.push({ type: "text", value: text.slice(last) });
   return parts;
@@ -18,17 +16,26 @@ function splitCodeBlocks(text) {
 
 export default function Message({ role, content }) {
   const parts = splitCodeBlocks(content || "");
+  if (role === "system") {
+    return <div className="msg system">{parts.map((part, index) => <span key={index}>{part.value}</span>)}</div>;
+  }
+
   return (
-    <div className={`msg ${role}`}>
-      {parts.map((p, i) =>
-        p.type === "code" ? (
-          <pre key={i}>
-            <code>{p.value}</code>
-          </pre>
-        ) : (
-          <span key={i}>{p.value}</span>
-        )
-      )}
+    <div className={`message-row ${role}`}>
+      <div className={`message-avatar ${role}`} aria-hidden="true">{role === "user" ? "G" : "V"}</div>
+      <div className={`msg ${role}`}>
+        <span className="message-author">{role === "user" ? "Você" : "Vessie AI"}</span>
+        {parts.map((part, index) =>
+          part.type === "code" ? (
+            <pre key={index}>
+              {part.lang && <span className="code-language">{part.lang}</span>}
+              <code>{part.value}</code>
+            </pre>
+          ) : (
+            <span className="message-text" key={index}>{part.value}</span>
+          )
+        )}
+      </div>
     </div>
   );
 }

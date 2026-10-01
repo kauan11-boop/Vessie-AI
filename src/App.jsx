@@ -21,12 +21,21 @@ export default function App() {
 
       <div className="main-panel">
         <div className="topbar">
-          <h1>
-            Modo: <b>{mode === "chatbot" ? "Chatbot" : "Agent Coding"}</b>
-          </h1>
+          <div className="topbar-copy">
+            <span className="section-kicker">VESSIE AI <span>/</span> WORKSPACE</span>
+            <h1>{mode === "chatbot" ? "Chat com IA" : "Agent Coding"}</h1>
+          </div>
+          <div className="topbar-context"><span className="context-dot" />
+            {mode === "chatbot" ? "Assistente pessoal" : "Ambiente de desenvolvimento"}
+          </div>
         </div>
 
-        {mode === "chatbot" ? <ChatBot key="chatbot" /> : <AgentCoding key="agent" />}
+        <div className="mode-view" hidden={mode !== "chatbot"}>
+          <ChatBot />
+        </div>
+        <div className="mode-view" hidden={mode !== "agent"}>
+          <AgentCoding />
+        </div>
       </div>
 
       {settingsOpen && (
