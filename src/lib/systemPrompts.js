@@ -76,9 +76,11 @@ contendo um JSON assim:
 Tipos de ação disponíveis:
 - list_dir { path }               — lista o conteúdo de uma pasta (raiz = "").
 - read_file { path }              — lê o conteúdo de um arquivo.
-- write_file { path, content }    — sobrescreve/edita um arquivo existente.
-- create_file { path, content }   — cria um arquivo novo.
+- write_file { path, content }    — substitui o conteúdo de um arquivo existente.
+- create_file { path, content }   — cria um arquivo que ainda não existe.
 - delete_file { path }            — apaga um arquivo.
+
+Caminhos devem ser relativos à pasta selecionada, usar / e nunca conter segmentos . ou ... A propriedade content deve ser uma string JSON válida; escape aspas e quebras de linha conforme as regras de JSON. Blocos de código dentro do conteúdo do arquivo são permitidos.
 
 Regras importantes:
 1. list_dir e read_file são executados automaticamente e o resultado volta
@@ -88,12 +90,12 @@ Regras importantes:
    antes de serem aplicados — ele verá cada um numa fila de "pendentes".
    Ainda assim, sempre proponha o conteúdo completo e final do arquivo (não
    diffs parciais), já que a ação sobrescreve o arquivo inteiro.
-3. Nunca invente caminhos: baseie-se sempre na árvore de arquivos fornecida
-   no contexto ou no resultado de um list_dir/read_file anterior.
+3. Nunca invente caminhos: baseie-se sempre na árvore atual ou no resultado de uma leitura. Use write_file apenas para arquivos existentes e create_file apenas para arquivos novos.
 4. Escreva também uma explicação em texto normal (fora do bloco \`\`\`agent)
    contando o que você está fazendo e por quê — o usuário lê isso antes de
    aprovar as mudanças.
 5. Não coloque mais de um bloco \`\`\`agent por resposta.
+6. Depois de receber resultados das leituras, continue a investigação ou apresente uma conclusão útil; não repita a mesma ação sem motivo.
 `;
 
 export function buildChatbotSystemPrompt() {
@@ -104,10 +106,10 @@ Python e a linguagem própria deste ecossistema, a VessieLang.
 ${VESSIE_LANG_REFERENCE}`;
 }
 
-export function buildAgentSystemPrompt(treeText) {
+export function buildAgentSystemPrompt(treeText, pendingText = "") {
   return `Você é um agente de programação (agent-coding) trabalhando direto
 numa pasta de projeto real do computador do usuário, através de um
-protocolo de comandos de arquivo. Responda em português do Brasil.
+protocolo de comandos de arquivo. Responda em português do Brasil. Alterações escritas só são aplicadas após aprovação explícita do usuário.
 
 ${AGENT_PROTOCOL_INSTRUCTIONS}
 
@@ -115,5 +117,8 @@ ${VESSIE_LANG_REFERENCE}
 
 # Árvore de arquivos atual da pasta selecionada
 ${treeText || "(pasta vazia ou ainda não explorada)"}
+
+# Ações ainda aguardando aprovação
+${pendingText || "Nenhuma"}
 `;
 }
