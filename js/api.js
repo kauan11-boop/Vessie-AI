@@ -57,11 +57,17 @@ export async function loadModels() {
 }
 
 // Lê SSE (skill §3): data: {...} ... data: [DONE]
+// Modelos de raciocínio (ex: Qwen3) enviam a fase de pensamento em
+// delta.reasoning_content — sem isso a tela só atualiza no texto final.
+// O pensamento é acumulado em lastStream.thinking e repassado ao onToken
+// como 3º argumento { thinking }, para exibição em tempo real.
+export const lastStream = { thinking: '' };
 export async function readSSE(response, onToken, signal) {
   const reader = response.body.getReader();
   const dec = new TextDecoder();
   let buf = '';
   let full = '';
+  lastStream.thinking = '';
   for (;;) {
     if (signal && signal.aborted) { try { reader.cancel(); } catch (e) {} break; }
     const { done, value } = await reader.read();
@@ -76,8 +82,14 @@ export async function readSSE(response, onToken, signal) {
       if (!data || data === '[DONE]') continue;
       try {
         const j = JSON.parse(data);
-        const delta = (j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content) || '';
-        if (delta) { full += delta; if (onToken) onToken(delta, full); }
+        const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+        const rdelta = dl.reasoning_content || dl.reasoning || '';
+        if (rdelta) {
+          lastStream.thinking += rdelta;
+          if (onToken) { try { onToken(rdelta, full, { thinking: lastStream.thinking }); } catch (e) {} }
+        }
+        const delta = dl.content || '';
+        if (delta) { full += delta; if (onToken) { try { onToken(delta, full, { thinking: lastStream.thinking }); } catch (e) {} } }
       } catch (e) { /* chunk parcial: ignora */ }
     }
   }

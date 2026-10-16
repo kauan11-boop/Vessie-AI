@@ -2,7 +2,7 @@
 import { state } from './state.js?v=7';
 import { Storage } from './storage.js?v=7';
 import { ui } from './ui.js?v=7';
-import { initElements, renderChat, sendMessage, cancelGeneration, checkLMStudioConnection, setupKeyboardShortcuts, autoResize, askSuggestion, regenerateImage, regenerateImageFromBlock, downloadImageUrl, copyImageUrl, __imgErr, editMessage, saveEdit, deleteMessage, resendMessage, regenerateFrom, copyMessage } from './chat.js?v=7';
+import { initElements, renderChat, sendMessage, cancelGeneration, checkLMStudioConnection, setupKeyboardShortcuts, autoResize, askSuggestion, regenerateImage, regenerateImageFromBlock, downloadImageUrl, copyImageUrl, __imgErr, editMessage, saveEdit, deleteMessage, resendMessage, regenerateFrom, copyMessage, continueResponse, generatingActive } from './chat.js?v=14';
 import { Conversations, renderChatSidebar } from './conversations.js?v=7';
 import { Settings, updateModelLabel } from './settings.js?v=7';
 import { autoCorrect } from './spelling.js?v=7';
@@ -30,6 +30,7 @@ window.saveEdit = saveEdit;
 window.deleteMessage = deleteMessage;
 window.resendMessage = resendMessage;
 window.regenerateFrom = regenerateFrom;
+window.continueResponse = continueResponse;
 window.copyMessage = copyMessage;
 window.runSandbox = runSandbox;
 window.runVessieBlock = runVessieBlock;

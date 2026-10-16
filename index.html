@@ -12,9 +12,15 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
-    <link rel="stylesheet" href="css/main.css?v=4">
-    <link rel="stylesheet" href="css/layout.css?v=4">
-    <link rel="stylesheet" href="css/components.css?v=4">
+    <link rel="stylesheet" href="css/main.css?v=13">
+    <link rel="stylesheet" href="css/layout.css?v=13">
+    <link rel="stylesheet" href="css/components.css?v=13">
+    <style id="welcome-center-fix">
+      #chatArea > div.welcome{display:flex !important;flex-direction:column !important;align-items:center !important;justify-content:flex-start !important;text-align:center !important;width:100% !important;margin:0 auto !important;}
+      #chatArea > div.welcome > div.welcome-mascot,#chatArea > div.welcome > div.welcome-logo{display:flex !important;align-items:center !important;justify-content:center !important;width:100% !important;margin:0 auto !important;text-align:center !important;}
+      #chatArea > div.welcome > div.welcome-mascot > svg,#chatArea > div.welcome > div.welcome-logo > svg{display:block !important;width:76px !important;height:76px !important;margin:0 auto !important;}
+      #chatArea > div.welcome > h2,#chatArea > div.welcome > p{text-align:center !important;width:100% !important;max-width:560px !important;margin-left:auto !important;margin-right:auto !important;}
+    </style>
     
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
@@ -63,7 +69,7 @@
         <div id="chatList"></div>
         
         <div class="sidebar-footer">
-            <button class="btn primary" onclick="location.hash='#/memory'"><i class="fa-solid fa-brain"></i> Memory Manager</button>
+            <button class="btn primary icon" onclick="location.hash='#/memory'" title="Memory Manager" aria-label="Memory Manager"><i class="fa-solid fa-brain"></i></button>
         </div>
     </aside>
 
@@ -89,6 +95,7 @@
                 <span class="badge stream-on" id="streamBadge" title="Streaming SSE ativo">⚡ stream</span>
                 
                 <div class="header-actions-right">
+                    <button class="btn" onclick="packCurrentChat()" title="Empacotar scripts do chat em ZIP"><i class="fa-solid fa-box-open"></i></button>
                     <button class="btn" onclick="Settings.testConnection()" title="Testar conexão"><i class="fa-solid fa-wifi"></i></button>
                     <button class="btn" onclick="Settings.load()" title="Atualizar configurações"><i class="fa-solid fa-gear"></i></button>
                 </div>
@@ -128,7 +135,7 @@
                 <h4>Configurações Gerais</h4>
                 <div class="field">
                     <label>Prompt de sistema</label>
-                    <textarea id="systemPrompt" rows="3">Você é a Vessie-AI, uma assistente útil que responde em português brasileiro, com markdown bem formatado e exemplos de código quando relevante.</textarea>
+                    <textarea id="systemPrompt" rows="3">Você é a Vessie-AI, uma assistente útil que responde em português brasileiro, com markdown bem formatado e exemplos de código quando relevante. Quando o usuário pedir para empacotar ou baixar tudo em ZIP, entregue cada arquivo em bloco de código nomeado (ex: ```html:index.html ... ```, ```css:style.css ... ```, ```javascript:app.js ... ```) e finalize com um bloco ```pack:nome-do-pacote```. Raciocine por conta própria antes de responder: identifique os elementos principais da pergunta, defina suas tarefas (até 10) e pense passo a passo em frases curtas (máximo 20 palavras cada). Para alterar um código, especifique no raciocínio o arquivo e as linhas exatas e emita só ```edit:arquivo:ini-fim``` com as novas linhas, sem reescrever tudo. Encerre toda resposta com [FIM] em linha própria. Reutilize sozinha os scripts existentes via ```edit:arquivo:ini-fim``` em vez de recriar.</textarea>
                 </div>
                 <div class="field-row">
                     <div class="field"><label>Temperature (0–2)</label><input type="number" id="sTemp" min="0" max="2" step="0.1" value="0.7"></div>
@@ -267,7 +274,7 @@ Limites honestos: o Vessie-AI roda no navegador e não toca o PC sozinho — est
                 <li>Ative <b>"Serve on Local Network"</b> e <b>"Enable CORS"</b> nas configurações do servidor (engrenagem). Porta padrão: <code>1234</code>.</li>
                 <li>Volte ao site → clique no status no topo da sidebar → <b>Salvar & Conectar</b>. O nome do modelo deve aparecer no seletor. ✅</li>
                 <li>🤖 <b>Agents:</b> no topo clique em <b>Agents</br>→ crie um agent com prompt + instruções → <b>ative</b> (▶). Enquanto gera aparece <b>Agent em uso…</b>; ao terminar, <b>agent concluiu</b>.</li>
-                <li>📄 <b>Scripts:</b> códigos da IA viram cartões (ícone + nome). Clique para abrir o <b>painel lateral</b> com copiar e baixar. A IA pode nomear o arquivo assim: <code>```python:app.py</code>.</li>
+                <li>📄 <b>Scripts:</b> códigos da IA viram cartões (ícone + nome). Clique para abrir o <b>painel lateral</b> com copiar e baixar. A IA pode nomear o arquivo assim: <code>```python:app.py</code>. Para empacotar tudo em ZIP, a IA termina com <code>```pack:nome</code> (o .html abre no navegador, o resto vai junto) — ou use o botão 📦 no topo.</li>
                 <li>🎨 <b>Imagens:</b> peça <code>crie uma imagem de…</code> — a IA confirma, <b>aprimora o prompt em inglês</b> e a imagem aparece no chat (API pública gratuita, sem chave). Dá para gerar <b>variação 🎲</b> e <b>baixar ⬇</b>.</li>
                 <li>🔄 <b>Segundo plano:</b> pode <b>trocar de conversa</b> enquanto a IA responde — a conversa ganha ⏳ e a resposta é salva lá. O botão <b>■</b> para a geração de onde você estiver.</li>
             </ol>
@@ -389,10 +396,13 @@ Limites honestos: o Vessie-AI roda no navegador e não toca o PC sozinho — est
     <aside id="codeDrawer" aria-label="Painel de script">
         <div class="drawer-head">
             <div class="drawer-title">📄 <span id="drawerName">script</span></div>
-            <button class="mini-btn" onclick="closeDrawer()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            <div class="drawer-head-btns">
+                <button class="mini-btn" id="drawerPreviewBtn" onclick="toggleDrawerPreview()" title="Ver preview do HTML" style="display:none;"><i class="fa-solid fa-eye"></i> Preview</button>
+                <button class="mini-btn" onclick="closeDrawer()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
         <div class="drawer-tabs" id="drawerTabs"></div>
-        <div class="drawer-body"><pre><code id="drawerCode"></code></pre></div>
+        <div class="drawer-body"><pre id="drawerPre"><code id="drawerCode"></code></pre><iframe id="drawerPreview" title="Preview do HTML" sandbox="allow-scripts" style="display:none;"></iframe></div>
         <div class="drawer-foot">
             <span id="drawerMeta"></span>
             <button class="btn" onclick="copyDrawerFile()"><i class="fa-regular fa-copy"></i> Copiar</button>
@@ -402,10 +412,12 @@ Limites honestos: o Vessie-AI roda no navegador e não toca o PC sozinho — est
 
     <script src="js/env-config.js?v=1"></script>
     <script src="js/bridge.js?v=1"></script>
+    <script src="js/pack.js?v=1"></script>
+    <script src="js/lineedit.js?v=2"></script>
     <script src="memory/memory-zip.js?v=4"></script>
     <script src="memory/memory-core.js?v=4"></script>
     <script src="memory/manager-ui.js?v=4"></script>
-    <script type="module" src="js/app.js?v=7"></script>
+    <script type="module" src="js/app.js?v=14"></script>
     
     <script>
         function openModal(id) {
@@ -509,27 +521,104 @@ Limites honestos: o Vessie-AI roda no navegador e não toca o PC sozinho — est
         function openDrawer() {
             document.getElementById('drawerScrim').classList.add('open');
             document.getElementById('codeDrawer').classList.add('open');
+            // Oculta a sidebar enquanto o menu de script está aberto
+            const sb = document.getElementById('sidebar');
+            if (sb && !sb.classList.contains('collapsed')) {
+                sb.classList.add('collapsed');
+                sb.classList.remove('expanded');
+                try { localStorage.setItem('vessie-ai-sidebar', 'collapsed'); } catch (e) {}
+            }
+        }
+
+        function packCurrentChat() {
+            if (window.VessiePack && window.VessiePack.downloadFromChat) window.VessiePack.downloadFromChat();
+            else if (typeof showToast === 'function') showToast('Empacotador ainda carregando…');
+        }
+
+        function escDrawer(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function openScriptIndex(i) {
+            const store = window.__vessieScripts || [];
+            const item = store[Number(i)];
+            if (!item) return false;
+            const nameEl = document.getElementById('drawerName');
+            const codeEl = document.getElementById('drawerCode');
+            const metaEl = document.getElementById('drawerMeta');
+            if (nameEl) nameEl.textContent = item.name || 'script';
+            // Código numerado por linha (para a edição por linha); copiar/baixar usa o texto puro.
+            if (codeEl) codeEl.innerHTML = String(item.code || '').split('\n').map(l => '<span class="cl">' + (escDrawer(l) || ' ') + '</span>').join('');
+            if (metaEl) metaEl.textContent = (item.lang || '') + (item.code ? ' · ' + String(item.code).split('\n').length + ' linhas' : '');
+            const tabs = document.getElementById('drawerTabs');
+            if (tabs) tabs.innerHTML = '';
+            window.__drawerItem = item;
+            // Preview só para HTML: mostra o botão e volta ao modo código
+            const isHtml = (item.lang || '').toLowerCase() === 'html' || /\.html?$/i.test(item.name || '');
+            showDrawerCode();
+            const pvBtn = document.getElementById('drawerPreviewBtn');
+            if (pvBtn) pvBtn.style.display = isHtml ? '' : 'none';
+            openDrawer();
+            return true;
+        }
+
+        function openScriptFromBtn(btn) {
+            try {
+                const idx = Number(btn.getAttribute('data-script-idx'));
+                if (!openScriptIndex(idx)) openDrawer();
+            } catch (e) { openDrawer(); }
+        }
+
+        function showDrawerCode() {
+            const pre = document.getElementById('drawerPre');
+            const pv = document.getElementById('drawerPreview');
+            const btn = document.getElementById('drawerPreviewBtn');
+            if (pre) pre.style.display = '';
+            if (pv) { pv.style.display = 'none'; pv.removeAttribute('srcdoc'); }
+            if (btn) btn.classList.remove('active');
+        }
+
+        function toggleDrawerPreview() {
+            const pre = document.getElementById('drawerPre');
+            const pv = document.getElementById('drawerPreview');
+            const btn = document.getElementById('drawerPreviewBtn');
+            if (!pv || pv.style.display !== 'none') { showDrawerCode(); return; }
+            const item = window.__drawerItem;
+            if (pre) pre.style.display = 'none';
+            pv.style.display = '';
+            // srcdoc via propriedade (sem escapar): roda isolado (sandbox sem same-origin)
+            pv.srcdoc = (item && item.code) || document.getElementById('drawerCode').textContent || '';
+            if (btn) btn.classList.add('active');
         }
         
         function closeDrawer() {
             document.getElementById('drawerScrim').classList.remove('open');
             document.getElementById('codeDrawer').classList.remove('open');
+            // Mostra a sidebar de novo ao fechar o menu
+            const sb = document.getElementById('sidebar');
+            if (sb && sb.classList.contains('collapsed')) {
+                sb.classList.remove('collapsed');
+                sb.classList.add('expanded');
+                try { localStorage.setItem('vessie-ai-sidebar', 'expanded'); } catch (e) {}
+            }
         }
         
         function copyDrawerFile() {
-            const code = document.getElementById('drawerCode');
-            if (code) navigator.clipboard.writeText(code.textContent).then(() => {
+            const item = window.__drawerItem;
+            const txt = (item && item.code != null) ? String(item.code) : document.getElementById('drawerCode').textContent;
+            if (txt != null) navigator.clipboard.writeText(txt).then(() => {
                 showToast('Copiado!');
             });
         }
         
         function downloadDrawerFile() {
-            const code = document.getElementById('drawerCode');
-            if (code) {
-                const blob = new Blob([code.textContent], { type: 'text/plain' });
+            const item = window.__drawerItem;
+            const txt = (item && item.code != null) ? String(item.code) : document.getElementById('drawerCode').textContent;
+            if (txt != null) {
+                const blob = new Blob([txt], { type: 'text/plain' });
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
-                a.download = 'script_gerado.py';
+                a.download = (item && item.name) || 'script_gerado.py';
                 a.click();
                 URL.revokeObjectURL(a.href);
             }

@@ -4,8 +4,8 @@
 import { state } from './state.js?v=7';
 import { Storage } from './storage.js?v=7';
 import { ui } from './ui.js?v=7';
-import { renderMarkdownSafe, escapeHtml } from './markdown.js?v=7';
-import { checkConnection, chatCompletions } from './api.js?v=7';
+import { renderMarkdownSafe, escapeHtml } from './markdown.js?v=11';
+import { checkConnection, chatCompletions, lastStream } from './api.js?v=8';
 import { renderChatSidebar } from './conversations.js?v=7';
 import { autoCorrect } from './spelling.js?v=7';
 import { handleImageBlock, handleMemoryOps, executeMemoryOps } from './sandbox.js?v=7';
@@ -92,6 +92,36 @@ let sendBtn = null;
 let chatArea = null;
 let connectionStatus = null;
 let abortController = null;
+// true enquanto a IA está gerando (streaming ou continuação)
+let isGenerating = false;
+const SEND_ICON = '<i class="fa-solid fa-arrow-up"></i>';
+const STOP_ICON = '<i class="fa-solid fa-stop"></i>';
+
+// Marca de fim de resposta: a IA deve encerrar TODA resposta com [FIM].
+const DONE_MARK = '[FIM]';
+function hasDoneMark(text) {
+  return /(^|\n)\s*\[FIM\]\s*$/.test(String(text || ''));
+}
+function stripDone(text) {
+  return String(text || '').replace(/(^|\n)\s*\[FIM\]\s*$/, '').replace(/\s+$/, '');
+}
+
+// Liga/desliga o estado "respondendo": ícone do botão + trava de envio.
+export function generatingActive() { return isGenerating; }
+function setGenerating(on) {
+  isGenerating = !!on;
+  try {
+    if (!sendBtn) sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) {
+      sendBtn.innerHTML = isGenerating ? STOP_ICON : SEND_ICON;
+      sendBtn.setAttribute('aria-label', isGenerating ? 'Parar resposta' : 'Enviar');
+      sendBtn.title = isGenerating ? 'Parar resposta' : 'Enviar';
+      sendBtn.classList.toggle('stop', isGenerating);
+    }
+    const badge = document.getElementById('streamBadge');
+    if (badge) badge.style.opacity = isGenerating ? '1' : '';
+  } catch (e) {}
+}
 
 // Inicializar referências após DOM carregar
 export function initElements() {
@@ -127,6 +157,8 @@ function offlineReply(userText) {
 export async function sendMessage() {
   if (!messageInput) initElements();
   if (!messageInput) return;
+  // Se a IA está respondendo, o botão vira PARAR (evita envio sobreposto).
+  if (isGenerating) { cancelGeneration(); return; }
   // Corretor ortográfico autônomo e escondido (antes de qualquer envio).
   const text = autoCorrect(messageInput.value.trim());
   if (!text || !state.activeChatId) return;
@@ -437,6 +469,29 @@ export function handleMemoryBlocks(text) {
 
 // ===== GERAR RESPOSTA COM STREAMING (POST + ReadableStream) =====
 
+// ===== PENSAMENTO VISÍVEL (reasoning_content) =====
+// Quebra o raciocínio em frases/passos curtos para exibir como lista.
+function splitThinking(text) {
+  const m = String(text || '').match(/[^.!?…\n]+[.!?…]?/g) || [];
+  return m.map(s => s.trim()).filter(Boolean).slice(0, 40);
+}
+
+// Bloco do pensamento: minimizável (<details>) com ícone + status.
+// open=true durante o stream; ao terminar fica colapsado para rever depois.
+function renderThinking(thought, open) {
+  const steps = splitThinking(thought);
+  if (!steps.length) return '';
+  const lis = steps.map(s => '<li>' + escapeHtml(s) + '</li>').join('');
+  const status = open
+    ? 'pensando em tempo real… (' + steps.length + ' frases)'
+    : 'pensamento · ' + steps.length + ' frases · clique para rever';
+  return '<details class="think"' + (open ? ' open' : '') + '>' +
+    '<summary><span class="think-ico">💭</span>' +
+    '<span class="think-status">' + status + '</span>' +
+    '<span class="think-min" title="Minimizar/expandir"></span></summary>' +
+    '<ol class="think-steps">' + lis + '</ol></details>';
+}
+
 async function generateResponse() {
   const chat = state.conversations.find(c => c.id === state.activeChatId);
   if (!chat || !chatArea) return;
@@ -446,11 +501,22 @@ async function generateResponse() {
     abortController = null;
   }
   abortController = new AbortController();
+  setGenerating(true);
 
+  // Reutilização autônoma: entrega o inventário dos scripts existentes para
+  // a IA reaproveitar via edit: sem o usuário precisar pedir.
+  let scriptCtx = '';
+  try {
+    const LE0 = (typeof window !== 'undefined' && window.LineEdit) || null;
+    if (LE0) {
+      const inv = LE0.contextInventory(8000);
+      if (inv) scriptCtx = '\n\n' + inv;
+    }
+  } catch (e) {}
   const payload = {
     model: state.settings.model || '',
     messages: [
-      { role: 'system', content: state.settings.systemPrompt || 'Você é a Vessie-AI, uma assistente útil em português brasileiro.' },
+      { role: 'system', content: (state.settings.systemPrompt || 'Você é a Vessie-AI, uma assistente útil em português brasileiro.') + scriptCtx },
       ...chat.messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
     ],
     temperature: state.settings.temperature,
@@ -468,27 +534,35 @@ async function generateResponse() {
     payload.max_tokens = Number(state.settings.maxTokens);
   }
 
-  // Bolha viva da resposta
+  // Bolha viva da resposta (com ícone de "respondendo")
   const responseDiv = document.createElement('div');
   responseDiv.className = 'message bot';
-  responseDiv.innerHTML = '<div class="avatar bot"><svg viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg></div><div class="msg-body"><div class="msg-role">Vessie-AI</div><div class="msg-content"></div></div>';
+  responseDiv.innerHTML = '<div class="avatar bot"><svg viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg></div><div class="msg-body"><div class="msg-role">Vessie-AI <span class="gen-live"><span class="pulse"></span>respondendo…</span></div><div class="msg-content"></div></div>';
 
   chatArea.appendChild(responseDiv);
   const contentDiv = responseDiv.querySelector('.msg-content');
   let fullResponse = '';
+  let streamThought = '';
 
   try {
     fullResponse = await chatCompletions(payload, {
       signal: abortController.signal,
-      onToken: (delta, full) => {
+      onToken: (delta, full, info) => {
         fullResponse = full;
-        contentDiv.innerHTML = renderMarkdownSafe(full);
+        // Raciocínio do modelo (Qwen3 etc.) chega em reasoning_content bem
+        // antes do texto final — mostra em tempo real para não parecer travado.
+        if (info && info.thinking) streamThought = info.thinking;
+        contentDiv.innerHTML = renderThinking(streamThought, true) + renderMarkdownSafe(full);
         chatArea.scrollTop = chatArea.scrollHeight;
       }
     });
     if (!fullResponse) {
       contentDiv.innerHTML = renderMarkdownSafe('(resposta vazia do modelo)');
     }
+    // Protocolo de fim: a IA deve fechar com [FIM]; sem ele, a resposta pode
+    // estar cortada e ganha botão ▶ Continuar.
+    const finished = hasDoneMark(fullResponse);
+    fullResponse = stripDone(fullResponse);
     // Se a IA emitiu bloco image:, gera a imagem e salva como message.imageBlock
     const imgBlocks = handleImageBlock(fullResponse || '');
     if (imgBlocks.length) {
@@ -513,15 +587,31 @@ async function generateResponse() {
         chat.lastModified = Date.now();
       }
     }
-    Storage.addMessage(state.activeChatId, { role: 'assistant', content: fullResponse });
+    // O pensamento persiste na mensagem (minimizado) para rever depois —
+    // sem ele, o re-render apagava o bloco ao terminar.
+    const savedThinking = (streamThought || '').slice(0, 4000);
+    Storage.addMessage(state.activeChatId, { role: 'assistant', content: fullResponse, thinking: savedThinking || undefined, finished });
+    // Edição por linha: a IA especifica arquivo + linhas no think e emite
+    // blocos ```edit:arquivo:ini-fim``` — aplica sem reescrever o script.
+    try {
+      const LE = (typeof window !== 'undefined' && window.LineEdit) || null;
+      if (LE) {
+        const edits = LE.handleEditBlocks(fullResponse || '');
+        const okEd = edits.filter(e => e.ok);
+        const badEd = edits.filter(e => !e.ok);
+        if (okEd.length) ui.showToast('✏️ ' + okEd.map(e => e.file + ' (linhas ' + e.start + '–' + e.end + ')').join(' · ').slice(0, 160));
+        badEd.forEach(e => ui.showToast('⚠️ edit: ' + (e.error || 'falhou') + ' — ' + e.file));
+      }
+    } catch (e) { console.warn('line-edit falhou:', e); }
     interceptMemoryFromAI(fullResponse);
     // LM Studio ativo → treina a rede neural local com a conversa nova.
     try { Simulite.learnFromChat(state.conversations); Simulite.trainBurst(3); } catch (e) {}
     await maybeAutoTitle(chat);
+    if (!finished && fullResponse) ui.showToast('Resposta sem marca de fim — use ▶ Continuar');
   } catch (error) {
     if (error && error.name === 'AbortError') {
       if (fullResponse) {
-        Storage.addMessage(state.activeChatId, { role: 'assistant', content: fullResponse + '\n\n*(geração interrompida)*' });
+        Storage.addMessage(state.activeChatId, { role: 'assistant', content: stripDone(fullResponse) + '\n\n*(geração interrompida)*', finished: false });
       } else if (responseDiv && responseDiv.parentNode) {
         responseDiv.remove();
       }
@@ -542,6 +632,7 @@ async function generateResponse() {
     }
   } finally {
     abortController = null;
+    setGenerating(false);
     renderChat();
   }
 }
@@ -759,7 +850,113 @@ export function cancelGeneration() {
     try { abortController.abort(); } catch (e) {}
     abortController = null;
   }
+  setGenerating(false);
   ui.showToast('Geração cancelada');
+}
+
+// ===== CONTINUAR resposta cortada =====
+// Continua a MESMA mensagem de onde parou (sem criar outra): o trecho novo
+// passa pela memória completa — salva na conversa, alimenta Memory/Simulite
+// e aplica blocos (imagem, pack, edit) como uma resposta normal.
+export async function continueResponse(chatId, idx) {
+  if (isGenerating) { ui.showToast('Aguarde terminar para continuar'); return; }
+  const chat = state.conversations.find(c => c.id === chatId);
+  const msg = chat && chat.messages[idx];
+  if (!msg || msg.role === 'user') return;
+  if (!state.settings.model || state.settings.model === 'OFFLINE') {
+    ui.showToast('Continuar precisa do LM Studio ligado');
+    return;
+  }
+  if (!chatArea) initElements();
+  ensureChatActive(chatId);
+  if (abortController) {
+    try { abortController.abort(); } catch (e) {}
+    abortController = null;
+  }
+  abortController = new AbortController();
+  setGenerating(true);
+
+  const live = document.createElement('div');
+  live.className = 'message bot';
+  live.innerHTML = '<div class="avatar bot"><svg viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg></div><div class="msg-body"><div class="msg-role">Vessie-AI <span class="gen-live"><span class="pulse"></span>continuando…</span></div><div class="msg-content"></div></div>';
+  chatArea.appendChild(live);
+  const liveContent = live.querySelector('.msg-content');
+  chatArea.scrollTop = chatArea.scrollHeight;
+  let contFull = '';
+
+  try {
+    const history = chat.messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({ role: m.role, content: m.content }));
+    let contCtx = '';
+    try {
+      const LE0 = (typeof window !== 'undefined' && window.LineEdit) || null;
+      if (LE0) {
+        const inv = LE0.contextInventory(8000);
+        if (inv) contCtx = '\n\n' + inv;
+      }
+    } catch (e) {}
+    contFull = await chatCompletions({
+      model: state.settings.model,
+      messages: [
+        { role: 'system', content: (state.settings.systemPrompt || 'Você é a Vessie-AI, uma assistente útil em português brasileiro.') + contCtx },
+        ...history,
+        { role: 'user', content: 'Continue exatamente de onde você parou, sem repetir o que já foi dito. Termine com [FIM].' }
+      ],
+      temperature: state.settings.temperature,
+      top_p: state.settings.topP,
+      stream: true
+    }, {
+      signal: abortController.signal,
+      onToken: (delta, full) => {
+        contFull = full;
+        liveContent.innerHTML = renderMarkdownSafe(full);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
+    });
+    const part = stripDone(contFull);
+    if (part) {
+      msg.content = String(msg.content || '').replace(/\s+$/, '') + '\n' + part;
+      msg.finished = hasDoneMark(contFull);
+      msg.lastContinued = Date.now();
+      chat.lastModified = Date.now();
+      Storage.saveConversations();
+      // Memória completa do trecho novo (igual à resposta normal).
+      interceptMemoryFromAI(part);
+      try {
+        const LE = (typeof window !== 'undefined' && window.LineEdit) || null;
+        if (LE) {
+          const edits = LE.handleEditBlocks(part);
+          if (edits.filter(e => e.ok).length) ui.showToast('✏️ edição por linha aplicada na continuação');
+        }
+      } catch (e) {}
+      try { Simulite.learnFromChat(state.conversations); } catch (e) {}
+      if (!msg.finished) ui.showToast('Ainda sem [FIM] — pode Continuar de novo');
+    } else {
+      ui.showToast('Sem continuação do modelo');
+    }
+  } catch (error) {
+    if (error && error.name === 'AbortError') {
+      const part = stripDone(contFull);
+      if (part) {
+        msg.content = String(msg.content || '').replace(/\s+$/, '') + '\n' + part;
+        msg.finished = false;
+        chat.lastModified = Date.now();
+        Storage.saveConversations();
+        ui.showToast('Continuação interrompida e salva — use ▶ Continuar');
+      } else if (live && live.parentNode) {
+        live.remove();
+      }
+    } else {
+      console.error('Erro ao continuar:', error);
+      ui.showToast('Falha ao continuar');
+      if (live && live.parentNode) live.remove();
+    }
+  } finally {
+    abortController = null;
+    setGenerating(false);
+    renderChat();
+  }
 }
 
 // ===== VERIFICAR CONEXÃO =====
@@ -802,7 +999,7 @@ export function renderChat() {
     
     let contentHtml = '';
     if (msg.content) {
-      contentHtml = `<div class="msg-content">${renderMarkdownSafe(msg.content)}</div>`;
+      contentHtml = `<div class="msg-content">${!isUser && msg.thinking ? renderThinking(msg.thinking, false) : ''}${renderMarkdownSafe(msg.content)}</div>`;
     }
     if (msg.image && msg.image.url) {
       const img = msg.image;
@@ -844,6 +1041,7 @@ export function renderChat() {
           <button class="mini-btn" onclick="deleteMessage('${chat.id}', ${idx})" title="Excluir mensagem">🗑️ Excluir</button>
         </div>`
       : `<div class="msg-actions">
+          ${msg.finished === false ? `<button class="mini-btn" onclick="continueResponse('${chat.id}', ${idx})" title="Continuar de onde parou">▶ Continuar</button>` : ''}
           <button class="mini-btn" onclick="regenerateFrom('${chat.id}', ${idx})" title="Recriar resposta">🔄 Recriar</button>
           <button class="mini-btn" onclick="copyMessage('${chat.id}', ${idx})" title="Copiar mensagem">📋 Copiar</button>
         </div>`;
@@ -872,37 +1070,44 @@ export function renderChat() {
 }
 
 // Boas-vindas + menu completo da conversa nova (renderizado, não salvo).
+const WELCOME_POOL = [
+  'O que você pode fazer?',
+  'Crie um script Python de exemplo',
+  'Explique como funciona o Memory Manager',
+  'Me ajude a escrever um texto',
+  'Resuma este texto para mim',
+  'Crie uma lista de estudos para programação',
+  'Me explique um conceito como se eu tivesse 10 anos',
+  'Revise meu código e sugira melhorias',
+  'Crie um plano de treino semanal',
+  'Me ajude com uma ideia de projeto'
+];
+function pickWelcomeSuggestions(n = 2) {
+  const pool = [...WELCOME_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
 function renderWelcome(chat) {
   chatArea.innerHTML = '';
   const div = document.createElement('div');
   div.className = 'welcome';
   div.innerHTML = `
     <div class="welcome-mascot"><svg viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg></div>
-    <h2>Olá! Sou a Vessie-AI 👋</h2>
-    <p>Sua assistente local e privada: usa o <b>LM Studio</b> quando ele está ligado e, quando não, a rede neural <b>OFFLINE (Simulite)</b> segue a conversa e continua aprendendo. Escolha por onde começar:</p>
+    <h2>Olá! Eu sou a Vessie-AI 👋</h2>
+    <p>Oi, que bom te ver por aqui! Eu sou a Vessie-AI, sua parceira para pensar, criar e resolver — falo com você de um jeito natural e humano, e estou pronta para ajudar no que você precisar. Por onde a gente começa?</p>
     <div class="welcome-chips"></div>
-    <div class="welcome-links">
-      <button class="mini-btn" data-welcome="guide">🚀 Guia de conexão</button>
-      <button class="mini-btn" data-welcome="memory">🧠 Memory Manager</button>
-      <button class="mini-btn" data-welcome="settings">⚙️ Configurações</button>
-    </div>
   `;
   const chipsBox = div.querySelector('.welcome-chips');
-  [
-    'O que você pode fazer?',
-    'Crie um script Python de exemplo',
-    'Explique como funciona o Memory Manager',
-    'Me ajude a escrever um texto'
-  ].forEach(text => {
+  pickWelcomeSuggestions(2).forEach(text => {
     const b = document.createElement('button');
     b.className = 'chip';
     b.textContent = text;
     b.onclick = () => askSuggestion(text);
     chipsBox.appendChild(b);
   });
-  div.querySelector('[data-welcome="guide"]').onclick = () => openModal('helpModal');
-  div.querySelector('[data-welcome="memory"]').onclick = () => { location.hash = '#/memory'; };
-  div.querySelector('[data-welcome="settings"]').onclick = () => { if (window.Settings) window.Settings.load(); };
   chatArea.appendChild(div);
 }
 

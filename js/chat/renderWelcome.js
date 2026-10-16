@@ -1,23 +1,31 @@
 // chat/renderWelcome.js
+const WELCOME_POOL_FALLBACK = [
+  'O que você pode fazer?',
+  'Crie um script Python de exemplo',
+  'Explique como funciona o Memory Manager',
+  'Me ajude a escrever um texto',
+  'Resuma este texto para mim',
+  'Crie uma lista de estudos para programação',
+  'Me explique um conceito como se eu tivesse 10 anos',
+  'Revise meu código e sugira melhorias'
+];
 export function renderWelcome() {
   const chatArea = document.getElementById('chatArea');
   if (!chatArea) return;
 
+  const pool = [...WELCOME_POOL_FALLBACK];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const picks = pool.slice(0, 2);
+
   chatArea.innerHTML = `<div class="welcome">
     <div class="welcome-logo"><svg class="mascot" viewBox="0 0 120 120" role="img" aria-label="Mascote Vessie"><use href="#vessieMascot"/></svg></div>
-    <h2>Olá, eu sou a Vessie-AI</h2>
-    <p>Sua assistente local e privada — rodando 100% no seu <b>LM Studio</b>. Sem nuvem, sem custo, sem limite.</p>
-    <div class="setup-steps">
-      <div class="step"><b>1 · Suba o servidor</b>No LM Studio: <b>Local Server → Start Server</b> (porta <code>1234</code>).</div>
-      <div class="step"><b>2 · Libere o CORS</b>Na engrenagem do servidor, ative <code>Enable CORS</code>.</div>
-      <div class="step"><b>3 · Conecte aqui</b>Clique no status no topo da sidebar → <b>Salvar & Conectar</b>.</div>
-      <div class="step"><b>4 · No GitHub Pages?</b>Se der erro de <code>https → http</code>, use <code>ngrok http 1234</code> e cole a URL https nas configurações.</div>
-    </div>
-    <div class="suggestions">
-      <button class="suggestion-card" onclick="useSuggestion(this)">Explique como funciona um LLM em termos simples</button>
-      <button class="suggestion-card" onclick="useSuggestion(this)">Escreva uma função Python que lê CSV e mostra estatísticas</button>
-      <button class="suggestion-card" onclick="useSuggestion(this)">Me ajude a debugar um erro de JavaScript com exemplo</button>
-      <button class="suggestion-card" onclick="useSuggestion(this)">Crie uma imagem de um gato astronauta no espaço, estilo cinematográfico</button>
+    <h2>Olá! Eu sou a Vessie-AI 👋</h2>
+    <p>Oi, que bom te ver por aqui! Eu sou a Vessie-AI, sua parceira para pensar, criar e resolver — falo com você de um jeito natural e humano, e estou pronta para ajudar no que você precisar. Por onde a gente começa?</p>
+    <div class="welcome-chips">
+      ${picks.map(t => `<button class="chip" onclick="useSuggestion(this)">${t}</button>`).join('')}
     </div>
   </div>`;
 }
