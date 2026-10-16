@@ -1,0 +1,2 @@
+// trigger api-nova — dispara quando a mensagem contém "api:"
+@trigger api-nova when "api:" do save

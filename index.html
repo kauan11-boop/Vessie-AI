@@ -1,12 +1,784 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vessie Agent • Chat & Coding</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vessie AI Chat</title>
+    <meta name="description" content="Chatbot local privado">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/main.css?v=4">
+    <link rel="stylesheet" href="css/layout.css?v=4">
+    <link rel="stylesheet" href="css/components.css?v=4">
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <linearGradient id="vessieGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#E8A06C"/>
+                <stop offset=".55" stop-color="#C15F3C"/>
+                <stop offset="1" stop-color="#96421F"/>
+            </linearGradient>
+        </defs>
+        <symbol id="vessieMascot" viewBox="0 0 120 120">
+            <path d="M97 14 C98.3 22, 100 23.7, 108 25 C100 26.3, 98.3 28, 97 36 C95.7 28, 94 26.3, 86 25 C94 23.7, 95.7 22, 97 14 Z" fill="#0D8C6D"/>
+            <path d="M22 84 C22.9 88.5, 24.5 90.1, 29 91 C24.5 91.9, 22.9 93.5, 22 98 C21.1 93.5, 19.5 91.9, 15 91 C19.5 90.1, 21 88.5, 22 84 Z" fill="#0D8C6D" opacity=".75"/>
+            <circle cx="105" cy="64" r="3" fill="#0D8C6D" opacity=".5"/>
+            <circle cx="14" cy="62" r="2.5" fill="#FFF3E2" opacity=".9"/>
+            <rect x="22" y="22" width="76" height="76" rx="28" fill="url(#vessieGrad)"/>
+            <rect x="22" y="22" width="76" height="76" rx="28" fill="none" stroke="#7E3A1D" stroke-width="2.5" opacity=".45"/>
+            <path d="M36 48 Q60 30 84 48" fill="none" stroke="#FFF3E2" stroke-width="6.5" stroke-linecap="round" opacity=".55"/>
+            <ellipse cx="44" cy="36" rx="14" ry="7" fill="#FFFFFF" opacity=".22"/>
+            <ellipse cx="47" cy="63" rx="6.5" ry="8.5" fill="#2A1B12"/>
+            <ellipse cx="73" cy="63" rx="6.5" ry="8.5" fill="#2A1B12"/>
+            <circle cx="49.5" cy="60" r="2.2" fill="#FFFFFF"/>
+            <circle cx="75.5" cy="60" r="2.2" fill="#FFFFFF"/>
+            <ellipse cx="37" cy="73" rx="5" ry="3" fill="#7C2D1D" opacity=".35"/>
+            <ellipse cx="83" cy="73" rx="5" ry="3" fill="#7C2D1D" opacity=".35"/>
+            <path d="M51 79 Q60 87 69 79" fill="none" stroke="#2A1B12" stroke-width="4" stroke-linecap="round"/>
+        </symbol>
+    </svg>
+
+    <div id="overlay" onclick="ui.toggleSidebar()"></div>
+
+    <aside id="sidebar">
+        <div class="logo">
+            <svg class="logo-mascot" viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg>
+            <div class="logo-text">
+                <h1>Vessie AI Chat</h1>
+                <small>Local, privada e sempre ativa — offline a Simulite assume</small>
+            </div>
+        </div>
+        <div class="sidebar-actions">
+            <button class="btn primary" onclick="Conversations.newChat()"><i class="fa-solid fa-plus"></i> Nova conversa</button>
+        </div>
+        
+        <div id="chatList"></div>
+        
+        <div class="sidebar-footer">
+            <button class="btn primary" onclick="location.hash='#/memory'"><i class="fa-solid fa-brain"></i> Memory Manager</button>
+        </div>
+    </aside>
+
+    <main id="main">
+        <div class="app-header">
+            <button class="btn icon" id="sidebarToggleBtn" onclick="ui.toggleSidebar()" title="Mostrar/ocultar sidebar"><i class="fa-solid fa-bars"></i></button>
+            <div class="header-actions">
+                <div class="model-select">
+                    <button class="model-btn" id="modelBtn" onclick="toggleModelDrop(event)">
+                        <i class="fa-solid fa-microchip" style="color:var(--accent)"></i>
+                        <span id="modelBtnLabel">selecionar modelo…</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size:11px;color:var(--muted)"></i>
+                    </button>
+                    <button class="mini-btn" onclick="Settings.loadModels()" title="Atualizar modelos"><i class="fa-solid fa-rotate"></i></button>
+                    <div class="model-drop" id="modelDrop">
+                        <input id="modelSearch" placeholder="Buscar modelo…" oninput="renderModelDrop()">
+                        <div id="modelDropList"></div>
+                    </div>
+                </div>
+                
+                <span class="badge connection-badge" id="connBadge">Desconectado</span>
+                <span class="badge connection-badge" id="bridgeBadge">PC offline</span>
+                <span class="badge stream-on" id="streamBadge" title="Streaming SSE ativo">⚡ stream</span>
+                
+                <div class="header-actions-right">
+                    <button class="btn" onclick="Settings.testConnection()" title="Testar conexão"><i class="fa-solid fa-wifi"></i></button>
+                    <button class="btn" onclick="Settings.load()" title="Atualizar configurações"><i class="fa-solid fa-gear"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatArea" class="chat-area"></div>
+
+        <div class="input-zone">
+            <div class="input-wrapper">
+                <textarea id="messageInput" rows="1" placeholder="Pergunte qualquer coisa à Vessie-AI…" aria-label="Digite sua mensagem"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" aria-label="Enviar"><i class="fa-solid fa-arrow-up"></i></button>
+            </div>
+            
+            <p class="disclaimer">
+                <b>Vessie AI Chat</b> responde via <b>LM Studio</b> local — nada sai do seu PC. 
+                <a onclick="openModal('helpModal')">Ver guia de conexão</a> · 
+                Feito para <b>GitHub Pages</b>.
+            </p>
+        </div>
+    </main>
+
+    <!-- Modal Settings -->
+    <div class="modal-back" id="settingsModal">
+        <div class="modal">
+            <h3><i class="fa-solid fa-gear" style="color:var(--accent)"></i> Conexão & Parâmetros</h3>
+            <p class="sub">O site é estático (GitHub Pages). Ele fala direto com o LM Studio rodando no <b>seu PC</b> via API OpenAI-compatível.</p>
+            <p class="small">Certifique-se de que o servidor local está ligado com <b>CORS</b> ativado.</p>
+            
+            <div class="settings-tabs">
+                <button class="settings-tab active" onclick="toggleSettingsTab('general')">Geral</button>
+                <button class="settings-tab" onclick="toggleSettingsTab('api')">API</button>
+                <button class="settings-tab" onclick="toggleSettingsTab('chat')">Guia API</button>
+            </div>
+            
+            <div class="settings-content" id="settings-content-general">
+                <h4>Configurações Gerais</h4>
+                <div class="field">
+                    <label>Prompt de sistema</label>
+                    <textarea id="systemPrompt" rows="3">Você é a Vessie-AI, uma assistente útil que responde em português brasileiro, com markdown bem formatado e exemplos de código quando relevante.</textarea>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Temperature (0–2)</label><input type="number" id="sTemp" min="0" max="2" step="0.1" value="0.7"></div>
+                    <div class="field"><label>Top P (0–1)</label><input type="number" id="sTopP" min="0" max="1" step="0.05" value="1"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>Max tokens (vazio = ∞)</label><input type="number" id="sMaxTok" placeholder="ex: 2048"></div>
+                    <div class="field"><label>Timeout (s)</label><input type="number" id="sTimeout" value="120" min="10"></div>
+                </div>
+                <div class="toggle-row"><span>⚡ Streaming (resposta em tempo real)</span><label class="switch"><input type="checkbox" id="sStream" checked><span class="slider"></span></label></div>
+                <div class="toggle-row"><span>🔗 Auto-conectar ao abrir</span><label class="switch"><input type="checkbox" id="sAuto" checked><span class="slider"></span></label></div>
+                <div class="toggle-row"><span>📝 Corretor ortográfico automático</span><label class="switch"><input type="checkbox" id="sSpell" checked><span class="slider"></span></label></div>
+                <h4 style="margin-top:16px;">Geração de imagens</h4>
+                <div class="field-row">
+                    <div class="field"><label>Tamanho</label><select id="sImgSize">
+                        <option value="512x512">Pequena (512×512)</option>
+                        <option value="768x768">Média (768×768)</option>
+                        <option value="1024x1024">Quadrada (1024×1024)</option>
+                        <option value="768x1024">Retrato (768×1024)</option>
+                        <option value="1024x768">Paisagem (1024×768)</option>
+                    </select></div>
+                    <div class="field"><label>Modelo</label><select id="sImgModel">
+                        <option value="flux">Flux (qualidade)</option>
+                        <option value="turbo">Turbo (rápida)</option>
+                    </select></div>
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-content-api" style="display:none;">
+                <h4>Configurações de API</h4>
+                <p>Configurações de conexão do LM Studio.</p>
+                <div class="field">
+                    <label>URL base do LM Studio</label>
+                    <input id="sBaseUrl" value="http://localhost:1234/v1" placeholder="http://localhost:1234/v1">
+                    <p class="hint">Padrão: <code>http://localhost:1234/v1</code>. Se publicou no GitHub Pages (https) e o navegador bloquear <code>http://localhost</code>, use um túnel https (ex: <code>https://xxx.ngrok.io</code> → porta 1234) e cole aqui.</p>
+                </div>
+                <div class="field">
+                    <label>API Key (opcional — LM Studio aceita qualquer valor)</label>
+                    <input id="sApiKey" value="lm-studio" placeholder="lm-studio">
+                </div>
+            </div>
+            
+            <div class="settings-content" id="settings-content-chat" style="display:none;">
+                <h4>Guia API — IA que gera scripts Node.js para o site</h4>
+                <p>Este prompt transforma a IA numa engenheira que <b>gera scripts Node.js completos para modificar o site</b>: o sistema de tags (<code>tag:nome</code>) localiza cada conteúdo no HTML, o script <b>detecta a URL</b> onde o site roda (GitHub Pages ou localhost) e cada execução grava log em <code>tools/logs/</code>. Como usar: <b>1)</b> confira a URL na aba <b>API</b> · <b>2)</b> escolha o modelo no topo · <b>3)</b> clique em <b>Usar este prompt</b> — ou <b>Copiar</b> e colar como system prompt em qualquer outra IA compatível · <b>4)</b> peça a modificação e a IA entrega o script Node.js pronto para rodar.</p>
+                <!-- tag:api-guide-prompt -->
+                <div class="field">
+                    <label>Prompt completo — IA que gera scripts Node.js para modificar o site</label>
+                    <pre class="prompt-block" id="apiGuidePrompt">Você é um engenheiro Node.js sênior especialista em integração local. Sua tarefa é GERAR SCRIPTS Node.js completos que CONECTAM o site "Vessie AI Chat" ao PC real do usuário — você NÃO edita o site às cegas e NÃO cria sistemas do zero: produz scripts que fazem a ponte entre o navegador e a máquina.
+
+Contexto do Vessie-AI:
+- App web estático (HTML + JS) que roda no navegador, dentro de um sandbox: por si só NÃO acessa disco, terminal nem rede livre.
+- A ponte oficial já existe em tools/vessie-bridge.js: servidor HTTP LOCAL em 127.0.0.1:8787, protegido por token (BRIDGE_TOKEN no .env), com sandbox de caminhos e whitelist de comandos. Use-a como referência e base para todo script novo.
+- O cliente do site é js/bridge.js: chama o servidor, assina cada chamada com o token e degrada em silêncio quando a ponte está offline.
+
+O que você deve gerar (quando pedido):
+1. Um servidor Node.js (ou extensão da ponte) que o site chama por http://127.0.0.1:PORTA para AGIR no PC: listar/ler/escrever arquivos, mostrar status do sistema (CPU/RAM/uptime) e do LM Studio, e rodar ações seguras pré-aprovadas.
+2. Um cliente JS (js/bridge.js) que o site carrega para falar com esse servidor, assinando cada chamada com o token e degradando em silêncio se a ponte estiver offline.
+3. Aprimoramentos em tempo real: exponha /events (SSE) com o status do PC/LM Studio a cada poucos segundos, para o site atualizar o badge "PC conectado" sem recarregar.
+
+Regras de segurança (obrigatórias em todo script):
+- Ouça SOMENTE em 127.0.0.1 (nunca 0.0.0.0) e exija o token BRIDGE_TOKEN em TODAS as rotas, comparado em tempo constante.
+- Sandbox de caminhos: bloqueie qualquer leitura/escrita fora das raízes permitidas (proibido path traversal).
+- /run NÃO executa shell arbitrário: só uma whitelist de ações fixas (git-status, node-check, site-content, system-memory).
+- Nunca envie dados do PC para a internet — tudo é 100% local.
+
+Configuração (.env na raiz do projeto):
+- BASE_URL, API_KEY, MODEL, SITE_URL — conexão com a API do Vessie-AI/LM Studio.
+- BRIDGE_PORT=8787 e BRIDGE_TOKEN=hex gerado — usados pela ponte.
+- O site lê o .env via js/env-config.js (gerado por "node tools/site-content.js env-apply"), carregado antes do app.js.
+
+Como rodar e testar:
+- node tools/vessie-bridge.js            # sobe a ponte em 127.0.0.1:8787
+- node tools/site-content.js env-apply    # (re)gera js/env-config.js a partir do .env
+- Abra o site: o badge "PC conectado" aparece quando a ponte responde; "PC offline" quando não.
+
+
+Sistema de tags do site:
+- Todo conteúdo editável fica marcado no HTML: abre com tag:nome e fecha com /tag:nome (ex: api-guide-prompt).
+- Elementos HTML também podem marcar o conteúdo com o atributo data-tag seguido do nome da tag.
+- As tags dizem EXATAMENTE onde ler e escrever — nunca edite o HTML às cegas.
+
+Detecção de URL (obrigatória em todo script):
+- Descubra onde o site roda nesta ordem: argumento --url → variável SITE_URL → tools/site.config.json → git remote origin (GitHub Pages vira https://usuario.github.io/repositorio/) → fallback http://localhost:8080.
+- Classifique o ambiente como localhost, github-pages ou custom e informe no output.
+
+Script padrão do sistema (tools/site-content.js):
+- Node.js puro, sem dependências externas (apenas fs, path e child_process).
+- Kit completo de comandos: detect (URL+ambiente) · list (tags) · get <tag> · set <tag> --content-file arquivo · add <tag> --after <tag2> · new-section <tag> --title "Título" · env-init · env-show · env-set CHAVE=valor · env-apply · system-memory: init · list · get · put · edit-lines · new-folder · check · bundle · stats.
+- Cada execução grava log próprio em tools/logs/<comando>-<data>.log.
+
+System Memory (tools/system-memory.js — memória do projeto em arquivos):
+- Pasta system-memory/ com 7 categorias separadas — scripts, triggers, apis, mcps, plugins, skills, files — com 25 itens cada (criados pelo init), tudo em arquivos individuais.
+- O modelo PODE criar pastas e arquivos (new-folder, put) e escrever/editar conteúdo direto por script.
+- Junte tudo com bundle: gera system-memory/bundle.mem (formato .mem) para importar no Memory Manager do site.
+- check valida a sintaxe de qualquer script (node --check) — use sempre depois de editar.
+- PREFIRA EDITAR LINHAS: em vez de reescrever um script do zero, use edit-lines --lines a-b para modificar só as linhas selecionadas; recrie o arquivo apenas se ele não existir.
+
+Regras de operação:
+1. Responda sempre em português brasileiro, com markdown bem formatado.
+2. Ao pedirem um script, entregue o ARQUIVO COMPLETO e funcional, nunca só trechos. Nomeie o arquivo na abertura do bloco: ```javascript:tools/nome-do-script.js
+3. Depois do código, explique em tópicos curtos o que foi criado e como executar (ex: node tools/site-content.js detect).
+4. Se pedirem alteração do que já foi enviado, reenvie o arquivo COMPLETO atualizado e liste o que mudou.
+5. Para tarefas complexas (criar várias seções, migrar conteúdo), divida em scripts nomeados, indique a ordem de execução e o log de cada um.
+6. Se faltar informação essencial, assuma o mais razoável, declare a suposição e continue sem travar.
+7. Trabalhe em tempo real: a cada mensagem, evolua o script anterior em vez de recomeçar do zero.
+8. Todo script que modifique o site deve localizar o alvo pelas tags e detectar a URL antes de gravar qualquer coisa.
+9. Antes de sobrescrever uma tag, leia o conteúdo atual (get) e mostre o que será afetado; depois de gravar, confirme o arquivo alterado.
+10. Depois de modificar, valide que as tags continuam íntegras (list ou leitura do arquivo) e informe a URL final de preview.
+11. Antes de recriar um script que já existe, verifique com list/get do System Memory e edite só as linhas necessárias (edit-lines) — nunca regenere o arquivo inteiro sem necessidade. Use check para validar a sintaxe após qualquer edição.
+
+Limites honestos: o Vessie-AI roda no navegador e não toca o PC sozinho — esta ponte Node é a única forma de ligar os dois, e ela age no PC local e altera arquivos reais do projeto. Confirme caminho, porta e token antes de escrever. O navegador pode bloquear o acesso a 127.0.0.1 (CORS/rede); quando isso ocorre, o site simplesmente segue em "PC offline".</pre>
+                </div>
+                <!-- /tag:api-guide-prompt -->
+                <div class="modal-actions" style="margin-top:12px;">
+                    <button class="btn" onclick="copyApiGuidePrompt()"><i class="fa-regular fa-copy"></i> Copiar</button>
+                    <button class="btn primary" onclick="useApiGuidePrompt()">Usar este prompt</button>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('settingsModal')">Fechar</button>
+                <button class="btn primary" onclick="Settings.save()">Salvar & Conectar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Help -->
+    <div class="modal-back" id="helpModal">
+        <div class="modal">
+            <h3>🚀 Como ligar o LM Studio (2 min)</h3>
+            <p class="sub">Siga uma vez só. Depois é só abrir o site e conversar.</p>
+            <ol class="help-ol">
+                <li>Abra o <b>LM Studio</b> → baixe um modelo (ex: <code>qwen2.5-7b-instruct</code>, <code>llama-3.1-8b</code>) na aba <b>🔍 Discover</b>.</li>
+                <li>Vá em <b>Local Server</b> (ícone <code><></code> à esquerda) → selecione o modelo → clique em <b>Start Server</b>.</li>
+                <li>Ative <b>"Serve on Local Network"</b> e <b>"Enable CORS"</b> nas configurações do servidor (engrenagem). Porta padrão: <code>1234</code>.</li>
+                <li>Volte ao site → clique no status no topo da sidebar → <b>Salvar & Conectar</b>. O nome do modelo deve aparecer no seletor. ✅</li>
+                <li>🤖 <b>Agents:</b> no topo clique em <b>Agents</br>→ crie um agent com prompt + instruções → <b>ative</b> (▶). Enquanto gera aparece <b>Agent em uso…</b>; ao terminar, <b>agent concluiu</b>.</li>
+                <li>📄 <b>Scripts:</b> códigos da IA viram cartões (ícone + nome). Clique para abrir o <b>painel lateral</b> com copiar e baixar. A IA pode nomear o arquivo assim: <code>```python:app.py</code>.</li>
+                <li>🎨 <b>Imagens:</b> peça <code>crie uma imagem de…</code> — a IA confirma, <b>aprimora o prompt em inglês</b> e a imagem aparece no chat (API pública gratuita, sem chave). Dá para gerar <b>variação 🎲</b> e <b>baixar ⬇</b>.</li>
+                <li>🔄 <b>Segundo plano:</b> pode <b>trocar de conversa</b> enquanto a IA responde — a conversa ganha ⏳ e a resposta é salva lá. O botão <b>■</b> para a geração de onde você estiver.</li>
+            </ol>
+            <div class="error-box">
+                <b>⚠️ Publicou no GitHub Pages (https) e dá erro de conexão?</b><br>
+                É o bloqueio <i>mixed-content</i> (https → http://localhost). Soluções:<br>
+                <b>1)</b> rode <code>ngrok http 1234</code> e cole a URL https nas configurações · 
+                <b>2)</b> use o site localmente via <code>npx serve .</code> · 
+                <b>3)</b> no Chrome, em <code>chrome://flags/#block-insecure-private-network-requests</code> → Disabled.
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('helpModal')">Fechar</button>
+                <button class="btn primary" onclick="closeModal('helpModal');openModal('settingsModal')">Abrir configurações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Página dedicada Memory Manager (#/memory) -->
+    <section id="memoryPage" hidden>
+        <header class="mem-page-head">
+            <button class="btn icon" onclick="location.hash='#/chat'" title="Voltar ao chat"><i class="fa-solid fa-arrow-left"></i></button>
+            <svg class="mem-mascot" viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg>
+            <div class="mem-page-title">
+                <h1><i class="fa-solid fa-brain" style="color:var(--accent)"></i> Memory Manager</h1>
+                <small id="memPageStats"></small>
+            </div>
+            <button class="btn" onclick="document.getElementById('memZipInput').click()"><i class="fa-solid fa-upload"></i> Importar .zip</button>
+            <input type="file" id="memZipInput" accept=".zip" style="display:none" onchange="importMemoryZip(event)">
+            <button class="btn primary" onclick="exportMemoryZip()"><i class="fa-solid fa-file-zipper"></i> Exportar .zip</button>
+        </header>
+        <p class="sub">Pasta virtual local da IA: arquivos salvos pelos blocos <code>memory:put</code>, triggers e scripts. Tudo fica no seu navegador.</p>
+
+        <div class="mem-layout">
+            <aside class="mem-side">
+                <button class="mem-nav settings-tab active" onclick="toggleMemTab('files')"><i class="fa-solid fa-folder"></i><span>Arquivos</span><b class="mem-count" id="memCount-files">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleMemTab('skills')"><i class="fa-solid fa-brain"></i><span>Skills</span><b class="mem-count" id="memCount-skills">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleMemTab('plugins')"><i class="fa-solid fa-plug"></i><span>Plugins</span><b class="mem-count" id="memCount-plugins">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleMemTab('mcps')"><i class="fa-solid fa-network-wired"></i><span>MCPs</span><b class="mem-count" id="memCount-mcps">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleMemTab('apis')"><i class="fa-solid fa-globe"></i><span>APIs</span><b class="mem-count" id="memCount-apis">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleMemTab('triggers')"><i class="fa-solid fa-bolt"></i><span>Triggers</span><b class="mem-count" id="memCount-triggers">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleMemTab('scripts')"><i class="fa-solid fa-code"></i><span>Scripts</span><b class="mem-count" id="memCount-scripts">0</b></button>
+            </aside>
+            <div class="mem-content">
+                <div class="mem-pane" id="memPage-files"></div>
+                <div class="mem-pane" id="memPage-skills" style="display:none;"></div>
+                <div class="mem-pane" id="memPage-plugins" style="display:none;"></div>
+                <div class="mem-pane" id="memPage-mcps" style="display:none;"></div>
+            <div class="mem-pane" id="memPage-apis" style="display:none;"></div>
+                <div class="mem-pane" id="memPage-triggers" style="display:none;"></div>
+                <div class="mem-pane" id="memPage-scripts" style="display:none;"></div>
+                <div class="mem-pane" id="memPage-view" style="display:none;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Página System API (#/api) -->
+    <section id="apiPage" hidden>
+        <header class="mem-page-head">
+            <button class="btn icon" onclick="location.hash='#/chat'" title="Voltar ao chat"><i class="fa-solid fa-arrow-left"></i></button>
+            <svg class="mem-mascot" viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg>
+            <div class="mem-page-title">
+                <h1><i class="fa-solid fa-server" style="color:var(--accent)"></i> System API</h1>
+                <small>API local do sistema — 100% no navegador</small>
+            </div>
+        </header>
+        <p class="sub">API REST-like local: a IA envia e recebe informações via blocos <code>sys:write</code>, <code>sys:read</code> e rotas <code>api.*</code>. Tudo persiste em localStorage — nada sai do PC.</p>
+        <div class="mem-layout">
+            <aside class="mem-side">
+                <button class="mem-nav settings-tab active" onclick="toggleApiTab('apis')"><i class="fa-solid fa-globe"></i><span>APIs</span><b class="mem-count" id="apiCount-apis">0</b></button>
+                <button class="mem-nav settings-tab" onclick="toggleApiTab('vessie')"><i class="fa-solid fa-code"></i><span>VessieScript</span></button>
+                <button class="mem-nav settings-tab" onclick="toggleApiTab('console')"><i class="fa-solid fa-terminal"></i><span>Console</span></button>
+                <button class="mem-nav settings-tab" onclick="toggleApiTab('docs')"><i class="fa-solid fa-book"></i><span>Documentação</span></button>
+            </aside>
+            <div class="mem-content">
+                <div class="mem-pane" id="apiPane-apis"></div>
+                <div class="mem-pane" id="apiPane-vessie" style="display:none;"></div>
+                <div class="mem-pane" id="apiPane-console" style="display:none;"></div>
+                <div class="mem-pane" id="apiPane-docs" style="display:none;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Página Imagens (#/image) -->
+    <section id="imagePage" hidden>
+        <header class="mem-page-head">
+            <button class="btn icon" onclick="location.hash='#/chat'" title="Voltar ao chat"><i class="fa-solid fa-arrow-left"></i></button>
+            <svg class="mem-mascot" viewBox="0 0 120 120" aria-hidden="true"><use href="#vessieMascot"/></svg>
+            <div class="mem-page-title">
+                <h1><i class="fa-solid fa-image" style="color:var(--accent)"></i> Gerador de Imagens</h1>
+                <small>API Pollinations · gratuita · sem chave</small>
+            </div>
+        </header>
+        <div class="img-gen">
+            <div class="img-gen-form">
+                <label class="mem-label">Descreva a imagem
+                    <textarea id="imgPrompt" rows="3" placeholder="Ex: um gato astronauta flutuando no espaço…"></textarea>
+                </label>
+                <div class="field-row">
+                    <div class="field"><label>Tamanho</label><select id="imgSize">
+                        <option value="512x512">Pequena (512×512)</option>
+                        <option value="768x768">Média (768×768)</option>
+                        <option value="1024x1024" selected>Quadrada (1024×1024)</option>
+                        <option value="768x1024">Retrato (768×1024)</option>
+                        <option value="1024x768">Paisagem (1024×768)</option>
+                    </select></div>
+                    <div class="field"><label>Modelo</label><select id="imgModel">
+                        <option value="flux">Flux (qualidade)</option>
+                        <option value="turbo">Turbo (rápida)</option>
+                    </select></div>
+                </div>
+                <button class="btn primary" onclick="generateImagePage()"><i class="fa-solid fa-wand-magic-sparkles"></i> Gerar imagem</button>
+            </div>
+            <div class="img-gen-result" id="imgResult"></div>
+        </div>
+    </section>
+
+    <!-- Painel de scripts (Agent) -->
+    <div id="drawerScrim" onclick="closeDrawer()"></div>
+    <aside id="codeDrawer" aria-label="Painel de script">
+        <div class="drawer-head">
+            <div class="drawer-title">📄 <span id="drawerName">script</span></div>
+            <button class="mini-btn" onclick="closeDrawer()" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="drawer-tabs" id="drawerTabs"></div>
+        <div class="drawer-body"><pre><code id="drawerCode"></code></pre></div>
+        <div class="drawer-foot">
+            <span id="drawerMeta"></span>
+            <button class="btn" onclick="copyDrawerFile()"><i class="fa-regular fa-copy"></i> Copiar</button>
+            <button class="btn primary" onclick="downloadDrawerFile()"><i class="fa-solid fa-download"></i> Baixar</button>
+        </div>
+    </aside>
+
+    <script src="js/env-config.js?v=1"></script>
+    <script src="js/bridge.js?v=1"></script>
+    <script src="memory/memory-zip.js?v=4"></script>
+    <script src="memory/memory-core.js?v=4"></script>
+    <script src="memory/manager-ui.js?v=4"></script>
+    <script type="module" src="js/app.js?v=7"></script>
+    
+    <script>
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.add('open');
+            document.getElementById('overlay').classList.add('active');
+        }
+        
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.remove('open');
+            document.getElementById('overlay').classList.remove('active');
+        }
+        
+        function toggleModelDrop(e) {
+            if (e) e.stopPropagation();
+            const drop = document.getElementById('modelDrop');
+            if (!drop) return;
+            drop.classList.toggle('open');
+            if (drop.classList.contains('open')) {
+                renderModelDrop();
+                setTimeout(() => document.getElementById('modelSearch')?.focus(), 50);
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const drop = document.getElementById('modelDrop');
+            if (drop && drop.classList.contains('open') && !e.target.closest('.model-select')) {
+                drop.classList.remove('open');
+            }
+        });
+
+        async function renderModelDrop() {
+            const q = (document.getElementById('modelSearch')?.value || '').toLowerCase();
+            const box = document.getElementById('modelDropList');
+            if (!box) return;
+            box.innerHTML = '<div class="drop-empty">Carregando modelos…</div>';
+
+            let models = [];
+            try {
+                if (window.Settings && window.Settings.loadModels) {
+                    models = await window.Settings.loadModels() || [];
+                }
+            } catch (err) { /* mantém lista vazia */ }
+
+            // Fallback: usa modelo atual do estado
+            if (!models.length && window.state && window.state.settings && window.state.settings.model) {
+                models = [window.state.settings.model];
+            }
+
+            const filtered = models.filter(id => !q || String(id).toLowerCase().includes(q));
+            box.innerHTML = '';
+
+            if (!filtered.length) {
+                box.innerHTML = '<div class="drop-empty">Nenhum modelo no LM Studio agora — o modo OFFLINE (Simulite) já está disponível abaixo.</div>';
+            }
+
+            const current = window.state?.settings?.model;
+            filtered.forEach(id => {
+                const row = document.createElement('div');
+                row.className = 'model-row' + (id === current ? ' current' : '');
+                const short = String(id).split('/').pop().replace('.gguf', '') || id;
+                row.innerHTML = `<span class="m-dot${id === current ? ' current' : ''}"></span><span class="m-info"><span class="m-name">${short}</span><span class="m-id">${id}</span></span>`;
+                row.onclick = () => { selectModel(id); document.getElementById('modelDrop').classList.remove('open'); };
+                box.appendChild(row);
+            });
+
+            // Modo OFFLINE (Simulite-Message): rede neural local que responde sem LM Studio.
+            if (!q || 'offline simulite rede neural'.includes(q)) {
+                const offRow = document.createElement('div');
+                offRow.className = 'model-row' + (current === 'OFFLINE' ? ' current' : '');
+                offRow.innerHTML = `<span class="m-dot${current === 'OFFLINE' ? ' current' : ''}"></span><span class="m-info"><span class="m-name">OFFLINE · Simulite</span><span class="m-id">Rede neural local — responde e aprende sem LM Studio</span></span>`;
+                offRow.onclick = () => { selectModel('OFFLINE'); document.getElementById('modelDrop').classList.remove('open'); };
+                box.appendChild(offRow);
+            }
+        }
+
+        function selectModel(id) {
+            if (window.state) window.state.settings.model = id;
+            if (window.Storage) window.Storage.saveSettings();
+            if (window.updateModelLabel) window.updateModelLabel();
+            else {
+                const label = document.getElementById('modelBtnLabel');
+                if (label) label.textContent = String(id).split('/').pop().replace('.gguf', '') || id;
+            }
+        }
+        
+        function toggleSettingsTab(name) {
+            document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.settings-content').forEach(c => c.style.display = 'none');
+            
+            const tabBtn = document.querySelector(`[onclick="toggleSettingsTab('${name}')"]`);
+            const contentId = `settings-content-${name}`;
+            
+            if (tabBtn) tabBtn.classList.add('active');
+            if (contentId) document.getElementById(contentId).style.display = 'block';
+        }
+        
+        function openDrawer() {
+            document.getElementById('drawerScrim').classList.add('open');
+            document.getElementById('codeDrawer').classList.add('open');
+        }
+        
+        function closeDrawer() {
+            document.getElementById('drawerScrim').classList.remove('open');
+            document.getElementById('codeDrawer').classList.remove('open');
+        }
+        
+        function copyDrawerFile() {
+            const code = document.getElementById('drawerCode');
+            if (code) navigator.clipboard.writeText(code.textContent).then(() => {
+                showToast('Copiado!');
+            });
+        }
+        
+        function downloadDrawerFile() {
+            const code = document.getElementById('drawerCode');
+            if (code) {
+                const blob = new Blob([code.textContent], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'script_gerado.py';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            }
+        }
+
+        function exportCurrentChat() {
+            try {
+                const st = window.state;
+                if (!st || !st.activeChatId) { showToast('Nenhuma conversa ativa'); return; }
+                const chat = st.conversations.find(c => c.id === st.activeChatId);
+                if (!chat) { showToast('Nenhuma conversa ativa'); return; }
+                const blob = new Blob([JSON.stringify(chat, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = (chat.title || 'conversa') + '.json';
+                a.click();
+                URL.revokeObjectURL(a.href);
+                showToast('Conversa exportada');
+            } catch (e) { showToast('Falha ao exportar'); }
+        }
+
+        function importChatPrompt() {
+            document.getElementById('importFile')?.click();
+        }
+
+        function importChatFile(event) {            const file = event?.target?.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    if (window.Conversations) window.Conversations.importChat(reader.result);
+                    else showToast('Módulo de conversas ainda carregando');
+                } catch (e) { showToast('Arquivo inválido'); }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+        
+        function showToast(message) {
+            const existing = document.querySelector('.vessie-toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'vessie-toast';
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--panel);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 12px 20px;
+                font-size: 13px;
+                color: var(--text);
+                z-index: 1000;
+                animation: slideUp .3s ease-out;
+                box-shadow: 0 4px 20px rgba(0,0,0,.2);
+            `;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideUp .3s ease-in reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        function useApiGuidePrompt() {            const src = document.getElementById('apiGuidePrompt');
+            const dest = document.getElementById('systemPrompt');
+            if (src && dest) {
+                dest.value = src.textContent.trim();
+                showToast('Prompt aplicado! Clique em Salvar & Conectar.');
+            }
+        }
+
+        function copyApiGuidePrompt() {
+            const src = document.getElementById('apiGuidePrompt');
+            if (src) navigator.clipboard.writeText(src.textContent.trim()).then(() => {
+                showToast('Prompt copiado!');
+            });
+        }
+
+        // UI do Memory Manager: ver memory/manager-ui.js
+        // ===== Página System API (#/api) =====
+        function toggleApiTab(name) {
+            document.querySelectorAll('#apiPage .settings-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#apiPage .mem-pane').forEach(p => p.style.display = 'none');
+            const btn = document.querySelector(`#apiPage [onclick="toggleApiTab('${name}')"]`);
+            if (btn) btn.classList.add('active');
+            const pane = document.getElementById('apiPane-' + name);
+            if (pane) pane.style.display = 'block';
+            if (name === 'apis') renderApiApisPane();
+            if (name === 'vessie') renderVessiePane();
+            if (name === 'console') renderConsolePane();
+            if (name === 'docs') renderDocsPane();
+        }
+
+        function renderApiApisPane() {
+            const pane = document.getElementById('apiPane-apis');
+            if (!pane || !window.Memory) return;
+            const apis = window.Memory.listAPIs() || [];
+            const badge = document.getElementById('apiCount-apis');
+            if (badge) badge.textContent = apis.length;
+            pane.innerHTML = '<div class="mem-toolbar"><input class="mem-search" placeholder="Buscar API…" oninput="apiSearch(this.value)"></div>';
+            if (!apis.length) pane.innerHTML += '<div class="empty-state">Nenhuma API integrada.<br>A IA registra sozinha as URLs que citar — ou crie uma.</div>';
+            apis.forEach(api => {
+                const row = document.createElement('div');
+                row.className = 'mem-row';
+                row.innerHTML = '<span class="mem-row-name">' + api.name + '</span><span class="mem-row-meta">' + api.url + '</span>';
+                row.appendChild(Object.assign(document.createElement('button'), { className: 'mini-btn', textContent: 'Testar', onclick: () => { fetch(api.url, { mode: 'no-cors' }).then(() => showToast('✓ alcançável')).catch(() => showToast('✗ falhou')); } }));
+                row.appendChild(Object.assign(document.createElement('button'), { className: 'mini-btn', textContent: 'Excluir', onclick: () => { if (confirm('Excluir?')) { window.Memory.removeAPI(api.name); renderApiApisPane(); } } }));
+                pane.appendChild(row);
+            });
+        }
+
+        function apiSearch(q) {
+            const rows = document.querySelectorAll('#apiPane-apis .mem-row');
+            rows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes((q || '').toLowerCase()) ? '' : 'none'; });
+        }
+
+        function renderVessiePane() {
+            const pane = document.getElementById('apiPane-vessie');
+            if (!pane) return;
+            pane.innerHTML = `
+                <h4 style="margin-bottom:10px;">VessieScript — linguagem do sistema</h4>
+                <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">JS seguro com API <code>Sys</code>: arquivos virtuais (Memory), KV local e log. A IA executa via blocos sys:write / sys:read.</p>
+                <label class="mem-label">Código VessieScript
+                    <textarea id="vessieCode" rows="8" placeholder="// Ex: listar arquivos&#10;Sys.list('auto/')">// Ex: escrever um arquivo
+Sys.write('ola.txt', 'Olá do VessieScript!');
+Sys.read('ola.txt')</textarea>
+                </label>
+                <button class="btn primary" onclick="runVessieScript()"><i class="fa-solid fa-play"></i> Executar</button>
+                <pre class="prompt-block" id="vessieOut" style="margin-top:12px;display:none;"></pre>`;
+        }
+
+        function runVessieScript() {
+            const code = document.getElementById('vessieCode').value;
+            const out = document.getElementById('vessieOut');
+            out.style.display = 'block';
+            try {
+                const lines = code.split('\n').filter(l => l.trim() && !l.trim().startsWith('//'));
+                const last = lines[lines.length - 1] || '';
+                const wrapped = lines.slice(0, -1).join('\n') + '\nreturn (' + last.replace(/;\s*$/, '') + ');';
+                const result = window.Memory.runJS(wrapped, {});
+                out.textContent = '✓ ' + (result === null ? 'null (executado, sem retorno visível)' : JSON.stringify(result, null, 2));
+            } catch (e) {
+                out.textContent = '❌ ' + e.message;
+            }
+        }
+
+        function renderConsolePane() {
+            const pane = document.getElementById('apiPane-console');
+            if (!pane) return;
+            pane.innerHTML = `
+                <h4 style="margin-bottom:10px;">Console — enviar e receber JSON/scripts</h4>
+                <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Envie JSON ou scripts JavaScript para a System API processar. A resposta é exibida em tempo real.</p>
+                <label class="mem-label">Tipo de entrada
+                    <select id="consoleType">
+                        <option value="json">JSON</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="vessiescript">VessieScript</option>
+                    </select>
+                </label>
+                <label class="mem-label">Entrada
+                    <textarea id="consoleInput" rows="6" placeholder='{"action": "list"} ou Sys.write("a.txt", "conteúdo")'></textarea>
+                </label>
+                <button class="btn primary" onclick="runConsole()"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
+                <pre class="prompt-block" id="consoleOut" style="margin-top:12px;display:none;"></pre>`;
+        }
+
+        function runConsole() {
+            const type = document.getElementById('consoleType').value;
+            const input = document.getElementById('consoleInput').value;
+            const out = document.getElementById('consoleOut');
+            out.style.display = 'block';
+            try {
+                let result;
+                if (type === 'json') {
+                    const parsed = JSON.parse(input);
+                    result = window.Memory.runRoute(parsed.action, parsed.args || {});
+                } else if (type === 'javascript') {
+                    result = window.runSandbox(input, {});
+                } else {
+                    result = window.runVessieBlock(input);
+                }
+                out.textContent = '✓ ' + JSON.stringify(result, null, 2);
+            } catch (e) {
+                out.textContent = '❌ ' + e.message;
+            }
+        }
+
+        function renderDocsPane() {
+            const pane = document.getElementById('apiPane-docs');
+            if (!pane) return;
+            pane.innerHTML = `
+                <h4 style="margin-bottom:10px;">Documentação da System API</h4>
+                <div class="api-doc">
+                    <h5>Rotas (Memory.runRoute)</h5>
+                    <code>api.list</code> — lista APIs, MCPs e plugins<br>
+                    <code>api.files</code> — lista arquivos do Memory<br>
+                    <code>api.kv</code> — get/set/del no localStorage<br>
+                    <code>api.generateImage</code> — gera imagem via Pollinations
+                </div>
+                <div class="api-doc">
+                    <h5>Blocos da IA</h5>
+                    <code>sys:write:caminho</code> — escreve arquivo<br>
+                    <code>sys:read:caminho</code> — lê arquivo<br>
+                    <code>memory:api:nome|url</code> — registra API<br>
+                    <code>memory:trigger:nome|padrão|ação|categoria|descrição|api</code> — trigger com categoria
+                </div>
+                <div class="api-doc">
+                    <h5>Segurança</h5>
+                    <p>Sem fetch, XMLHttpRequest, document.write ou location. Tudo em localStorage. Nada sai do navegador.</p>
+                </div>`;
+        }
+
+        // ===== Página Imagens (#/image) =====
+        async function generateImagePage() {
+            const prompt = document.getElementById('imgPrompt').value.trim();
+            const size = document.getElementById('imgSize').value;
+            const model = document.getElementById('imgModel').value;
+            const result = document.getElementById('imgResult');
+            if (!prompt) { showToast('Descreva a imagem'); return; }
+            result.innerHTML = '<div class="empty-state">🖼️ Gerando…</div>';
+            try {
+                const img = await window.generateImageFull(prompt, { size, model });
+                result.innerHTML = `<div class="img-card"><div class="img-body"><img src="${img.url}" alt="${prompt}" loading="lazy"></div><div class="img-foot"><button class="mini-btn" onclick="generateImagePage()">🎲 Outra</button><button class="mini-btn" onclick="window.downloadImageFull('${img.url}')">⬇ Baixar</button></div></div>`;
+            } catch (e) {
+                result.innerHTML = '<div class="empty-state">❌ ' + e.message + '</div>';
+            }
+        }
+
+        // Key styles
+        if (!document.getElementById('toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+                .vessie-toast { animation: slideUp .3s ease-out; }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // O módulo js/app.js é o único ponto de inicialização.
+        // Este bloco só garante foco no campo se o módulo falhar.
+    </script>
+</body>
 </html>

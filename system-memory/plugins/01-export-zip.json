@@ -1,0 +1,5 @@
+{
+  "name": "export-zip",
+  "version": "1.0",
+  "description": "exporta o Memory Manager como .zip"
+}

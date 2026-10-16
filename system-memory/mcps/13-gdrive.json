@@ -1,0 +1,5 @@
+{
+  "name": "gdrive",
+  "command": "npx -y @modelcontextprotocol/server-gdrive",
+  "description": "arquivos do Google Drive"
+}

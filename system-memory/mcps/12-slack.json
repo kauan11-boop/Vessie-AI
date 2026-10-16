@@ -1,0 +1,5 @@
+{
+  "name": "slack",
+  "command": "npx -y @modelcontextprotocol/server-slack",
+  "description": "mensagens no Slack"
+}

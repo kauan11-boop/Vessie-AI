@@ -1,0 +1,2 @@
+// trigger status-sistema — dispara quando a mensagem contém "status"
+@trigger status-sistema when "status" do run

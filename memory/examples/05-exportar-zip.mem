@@ -1,0 +1,7 @@
+@memory exemplo-05-exportar-zip 2.0
+// Exemplo 05: exporta tudo como .zip real (STORE, puro-JS)
+
+@run js
+const info = Memory.exportZip();
+return "ZIP gerado: " + info.name + " (" + info.bytes + " bytes, " + info.count + " arquivos)";
+@end

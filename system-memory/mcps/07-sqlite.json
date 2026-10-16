@@ -1,0 +1,5 @@
+{
+  "name": "sqlite",
+  "command": "npx -y @modelcontextprotocol/server-sqlite",
+  "description": "consulta a SQLite"
+}

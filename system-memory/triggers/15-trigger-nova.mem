@@ -1,0 +1,2 @@
+// trigger trigger-nova — dispara quando a mensagem contém "trigger"
+@trigger trigger-nova when "trigger" do save

@@ -1,0 +1,5 @@
+{
+  "name": "nominatim",
+  "url": "https://nominatim.openstreetmap.org/",
+  "description": "geocodificacao OpenStreetMap"
+}

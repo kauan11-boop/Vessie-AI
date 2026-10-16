@@ -1,0 +1,65 @@
+# js/state/state.vessie.yml
+
+module: state/state
+version: "1.0.0"
+description: >
+  Estado global da aplicação. Usado em todas as camadas.
+  ATENÇÃO: Camadas superiores devem importar via ES Module,
+  não usar window.state diretamente.
+
+imports: []
+
+exports:
+  - state
+
+object:
+  settings:
+    type: object
+    description: "Configurações do usuário e da sessão"
+    properties:
+      baseUrl: { type: string, default: "" }
+      model: { type: string, default: "" }
+      temperature: { type: number, default: 0.7 }
+      topP: { type: number, default: 1 }
+      maxTokens: { type: string, default: "" }
+      stream: { type: boolean, default: true }
+      theme: { type: string, default: "dark" }
+      language: { type: string, default: "pt-BR" }
+
+  connection:
+    type: object
+    description: "Estado da conexão LM Studio"
+    properties:
+      isConnected: { type: boolean, default: false }
+      isChecking: { type: boolean, default: false }
+      lastCheck: { type: number, default: 0 }
+
+  chats:
+    type: array
+    description: "Lista de conversas"
+    items:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        messages: { type: array }
+        created: { type: number }
+        lastModified: { type: number }
+
+  activeChatId:
+    type: string|null
+    description: "ID da conversa ativa"
+
+  ui:
+    type: object
+    description: "Estado da interface"
+    properties:
+      sidebarCollapsed: { type: boolean }
+      theme: { type: string }
+      showWelcome: { type: boolean }
+
+depends: []
+
+issues:
+  - "Modulos externos referencem window.state diretamente (Rx: chat.js, app.js)"
+  - "Inconsistência entre state.js e storage.js: state.settings vs CONFIG.defaultSettings"

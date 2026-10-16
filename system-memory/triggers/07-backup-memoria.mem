@@ -1,0 +1,2 @@
+// trigger backup-memoria — dispara quando a mensagem contém "backup"
+@trigger backup-memoria when "backup" do save

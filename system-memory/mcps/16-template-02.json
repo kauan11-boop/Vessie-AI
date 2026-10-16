@@ -1,0 +1,5 @@
+{
+  "name": "template-02",
+  "command": "npx -y seu-mcp-02",
+  "description": "template MCP — troque pelo pacote real"
+}

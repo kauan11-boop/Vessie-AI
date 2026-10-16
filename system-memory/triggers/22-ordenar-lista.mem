@@ -1,0 +1,2 @@
+// trigger ordenar-lista — dispara quando a mensagem contém "ordene"
+@trigger ordenar-lista when "ordene" do save

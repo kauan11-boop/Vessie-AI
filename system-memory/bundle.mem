@@ -1,0 +1,1177 @@
+// System Memory bundle — gerado por tools/system-memory.js bundle em 2026-10-12T00:50:01.497Z
+
+@script 01-listar-arquivos lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\01-listar-arquivos.js — lista os arquivos da raiz do projeto
+// Uso: node system-memory/scripts/01-listar-arquivos.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+fs.readdirSync(ROOT).filter(f => !f.startsWith('.')).forEach(f => console.log(f));
+
+@script 02-contar-linhas lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\02-contar-linhas.js — conta as linhas de um arquivo
+// Uso: node system-memory/scripts/02-contar-linhas.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'index.html'); console.log(fs.readFileSync(f, 'utf8').split(/\r?\n/).length + ' linhas em ' + f);
+
+@script 03-backup-arquivo lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\03-backup-arquivo.js — cria copia .bak de um arquivo
+// Uso: node system-memory/scripts/03-backup-arquivo.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'index.html'); fs.copyFileSync(f, f + '.bak'); console.log('backup: ' + f + '.bak');
+
+@script 04-procurar-texto lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\04-procurar-texto.js — procura um texto dentro de um arquivo
+// Uso: node system-memory/scripts/04-procurar-texto.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'index.html'); const t = (process.argv[3] || '').toLowerCase(); fs.readFileSync(f, 'utf8').split(/\r?\n/).forEach((l, i) => { if (t && l.toLowerCase().includes(t)) console.log((i + 1) + ': ' + l.trim().slice(0, 120)); });
+
+@script 05-mostrar-env lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\05-mostrar-env.js — mostra o .env atual
+// Uso: node system-memory/scripts/05-mostrar-env.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+try { console.log(fs.readFileSync(path.join(ROOT, '.env'), 'utf8')); } catch (e) { console.log('sem .env — rode: node tools/site-content.js env-init'); }
+
+@script 06-limpar-logs lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\06-limpar-logs.js — remove logs com mais de 7 dias
+// Uso: node system-memory/scripts/06-limpar-logs.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const d = path.join(ROOT, 'tools', 'logs'); if (!fs.existsSync(d)) { console.log('sem logs'); process.exit(0); } const old = Date.now() - 7 * 864e5; let n = 0; fs.readdirSync(d).forEach(f => { const p = path.join(d, f); if (fs.statSync(p).mtimeMs < old) { fs.unlinkSync(p); n++; } }); console.log(n + ' log(s) removido(s)');
+
+@script 07-relatorio-tags lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\07-relatorio-tags.js — relata as tags do index.html
+// Uso: node system-memory/scripts/07-relatorio-tags.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const src = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'); const re = /<!--\s*tag:([\w-]+)\s*-->/g; let m, c = 0; while ((m = re.exec(src))) { c++; console.log('tag: ' + m[1]); } console.log(c + ' tag(s) no index.html');
+
+@script 08-detectar-url lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\08-detectar-url.js — detecta a URL do site via site-content
+// Uso: node system-memory/scripts/08-detectar-url.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+try { console.log(execSync('node tools/site-content.js detect', { cwd: ROOT, encoding: 'utf8' })); } catch (e) { console.log('falhou: ' + e.message); }
+
+@script 09-validar-json lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\09-validar-json.js — valida um arquivo JSON
+// Uso: node system-memory/scripts/09-validar-json.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'manifest.json'); try { JSON.parse(fs.readFileSync(f, 'utf8')); console.log('JSON valido: ' + f); } catch (e) { console.log('JSON invalido: ' + e.message); process.exit(1); }
+
+@script 10-titulos-md lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\10-titulos-md.js — lista os titulos de um .md
+// Uso: node system-memory/scripts/10-titulos-md.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'README.md'); fs.readFileSync(f, 'utf8').split(/\r?\n/).forEach(l => { if (/^#{1,6}\s/.test(l)) console.log(l.trim()); });
+
+@script 11-tamanho-arquivos lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\11-tamanho-arquivos.js — tamanhos dos arquivos da raiz
+// Uso: node system-memory/scripts/11-tamanho-arquivos.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+fs.readdirSync(ROOT).filter(f => fs.statSync(path.join(ROOT, f)).isFile()).forEach(f => console.log(String(fs.statSync(path.join(ROOT, f)).size).padStart(8) + '  ' + f));
+
+@script 12-linhas-duplicadas lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\12-linhas-duplicadas.js — acha linhas duplicadas em um arquivo
+// Uso: node system-memory/scripts/12-linhas-duplicadas.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'index.html'); const seen = new Map(); fs.readFileSync(f, 'utf8').split(/\r?\n/).forEach((l, i) => { const t = l.trim(); if (t.length > 20) seen.set(t, (seen.get(t) || []).concat(i + 1)); }); seen.forEach((ls, t) => { if (ls.length > 1) console.log('x' + ls.length + ' linhas ' + ls.join(',') + ': ' + t.slice(0, 80)); });
+
+@script 13-contar-palavras lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\13-contar-palavras.js — conta palavras de um arquivo
+// Uso: node system-memory/scripts/13-contar-palavras.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'README.md'); console.log(fs.readFileSync(f, 'utf8').split(/\s+/).filter(Boolean).length + ' palavras');
+
+@script 14-arvore-pastas lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\14-arvore-pastas.js — imprime a arvore de pastas
+// Uso: node system-memory/scripts/14-arvore-pastas.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+function w(d, p) { fs.readdirSync(d).forEach(n => { if (n.startsWith('.')) return; const q = path.join(d, n); console.log(p + n); if (fs.statSync(q).isDirectory()) w(q, p + '  '); }); } w(ROOT, '');
+
+@script 15-exportar-json lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\15-exportar-json.js — exporta o inventario do projeto em JSON
+// Uso: node system-memory/scripts/15-exportar-json.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const out = []; (function w(d) { fs.readdirSync(d).forEach(n => { if (n.startsWith('.') || n === 'node_modules') return; const q = path.join(d, n); const s = fs.statSync(q); if (s.isDirectory()) w(q); else out.push({ path: path.relative(ROOT, q), size: s.size }); }); })(ROOT); console.log(JSON.stringify(out, null, 2));
+
+@script 16-nome-hash lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\16-nome-hash.js — nome + hash curto de cada arquivo
+// Uso: node system-memory/scripts/16-nome-hash.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const c = require('crypto'); fs.readdirSync(ROOT).filter(f => fs.statSync(path.join(ROOT, f)).isFile()).forEach(f => console.log(c.createHash('md5').update(f).digest('hex').slice(0, 8) + '  ' + f));
+
+@script 17-recentes lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\17-recentes.js — 10 arquivos mais recentes
+// Uso: node system-memory/scripts/17-recentes.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+fs.readdirSync(ROOT).filter(f => fs.statSync(path.join(ROOT, f)).isFile()).map(f => ({ f: f, t: fs.statSync(path.join(ROOT, f)).mtimeMs })).sort((a, b) => b.t - a.t).slice(0, 10).forEach(x => console.log(new Date(x.t).toISOString().slice(0, 16) + '  ' + x.f));
+
+@script 18-pastas-vazias lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\18-pastas-vazias.js — encontra pastas vazias
+// Uso: node system-memory/scripts/18-pastas-vazias.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+let n = 0; (function w(d) { fs.readdirSync(d).forEach(x => { if (x.startsWith('.')) return; const q = path.join(d, x); if (fs.statSync(q).isDirectory()) { if (!fs.readdirSync(q).length) { console.log('vazia: ' + path.relative(ROOT, q)); n++; } else w(q); } }); })(ROOT); console.log(n + ' pasta(s) vazia(s)');
+
+@script 19-extensoes lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\19-extensoes.js — conta arquivos por extensao
+// Uso: node system-memory/scripts/19-extensoes.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const m = new Map(); fs.readdirSync(ROOT).forEach(f => { const e = path.extname(f) || '(sem)'; m.set(e, (m.get(e) || 0) + 1); }); m.forEach((c, e) => console.log(c + '  ' + e));
+
+@script 20-busca-ext lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\20-busca-ext.js — lista arquivos de uma extensao
+// Uso: node system-memory/scripts/20-busca-ext.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const e = process.argv[2] || '.js'; (function w(d) { fs.readdirSync(d).forEach(n => { if (n.startsWith('.')) return; const q = path.join(d, n); if (fs.statSync(q).isDirectory()) w(q); else if (n.endsWith(e)) console.log(path.relative(ROOT, q)); }); })(ROOT);
+
+@script 21-copiar-arvore lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\21-copiar-arvore.js — copia uma pasta inteira
+// Uso: node system-memory/scripts/21-copiar-arvore.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const src = path.join(ROOT, process.argv[2] || 'docs'); const dst = path.join(ROOT, process.argv[3] || ('copia-' + Date.now())); (function w(a, b) { fs.mkdirSync(b, { recursive: true }); fs.readdirSync(a).forEach(n => { const q = path.join(a, n); const r = path.join(b, n); if (fs.statSync(q).isDirectory()) w(q, r); else fs.copyFileSync(q, r); }); })(src, dst); console.log('copiado: ' + dst);
+
+@script 22-intervalo-linhas lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\22-intervalo-linhas.js — mostra linhas a-b de um arquivo
+// Uso: node system-memory/scripts/22-intervalo-linhas.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'index.html'); const a = +(process.argv[3] || 1); const b = +(process.argv[4] || a + 20); fs.readFileSync(f, 'utf8').split(/\r?\n/).slice(a - 1, b).forEach((l, i) => console.log((a + i) + ': ' + l));
+
+@script 23-cabecalho lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\23-cabecalho.js — adiciona cabecalho datado a um arquivo
+// Uso: node system-memory/scripts/23-cabecalho.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = path.join(ROOT, process.argv[2] || 'README.md'); fs.writeFileSync(f, '// atualizado em ' + new Date().toISOString().slice(0, 10) + String.fromCharCode(10) + fs.readFileSync(f, 'utf8')); console.log('cabecalho adicionado: ' + f);
+
+@script 24-remover-comentarios lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\24-remover-comentarios.js — remove linhas de comentario //
+// Uso: node system-memory/scripts/24-remover-comentarios.js <arquivo>
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+const f = process.argv[2]; if (!f) { console.log('uso: node remover-comentarios.js arquivo.js'); process.exit(1); } const p = path.join(ROOT, f); const out = fs.readFileSync(p, 'utf8').split(/\r?\n/).filter(l => !l.trim().startsWith('//')).join(String.fromCharCode(10)); fs.writeFileSync(p, out); console.log('comentarios removidos: ' + f);
+
+@script 25-resumo-geral lang javascript
+#!/usr/bin/env node
+// system-memory\scripts\25-resumo-geral.js — resumo: arquivos, pastas e tamanho
+// Uso: node system-memory/scripts/25-resumo-geral.js
+'use strict';
+const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
+const ROOT = path.resolve(__dirname, '..', '..');
+let files = 0, dirs = 0, size = 0; (function w(d) { fs.readdirSync(d).forEach(n => { if (n.startsWith('.')) return; const q = path.join(d, n); const s = fs.statSync(q); if (s.isDirectory()) { dirs++; w(q); } else { files++; size += s.size; } }); })(ROOT); console.log(files + ' arquivos · ' + dirs + ' pastas · ' + Math.round(size / 1024) + ' KB');
+
+@trigger auto-salvar-codigo when "```" do save
+@trigger salvar-python when "python" do save
+@trigger salvar-javascript when "javascript" do save
+@trigger executar-sys when "sys:" do run
+@trigger log-offline when "offline" do save
+@trigger guia-servidor when "lm studio" do save
+@trigger backup-memoria when "backup" do save
+@trigger resumir-conversa when "resuma" do save
+@trigger traduzir-en when "traduza" do save
+@trigger explicar when "explique" do save
+@trigger teste-rapido when "teste" do save
+@trigger nota-rapida when "nota:" do save
+@trigger imagem-auto when "imagem" do save
+@trigger api-nova when "api:" do save
+@trigger trigger-nova when "trigger" do save
+@trigger skill-nova when "skill" do save
+@trigger deploy when "deploy" do save
+@trigger git-status when "git" do save
+@trigger ler-arquivo when "ler " do read
+@trigger listar-conteudo when "liste" do run
+@trigger limpar-cache when "limpe" do save
+@trigger ordenar-lista when "ordene" do save
+@trigger converter-formato when "converta" do save
+@trigger ajuda-rapida when "ajuda" do help
+@trigger status-sistema when "status" do run
+
+@content apis/01-jsonplaceholder
+{
+  "name": "jsonplaceholder",
+  "url": "https://jsonplaceholder.typicode.com/",
+  "description": "REST falsa para testes"
+}
+
+@content apis/02-open-meteo
+{
+  "name": "open-meteo",
+  "url": "https://api.open-meteo.com/v1/",
+  "description": "previsao do tempo sem chave"
+}
+
+@content apis/03-dog-ceo
+{
+  "name": "dog-ceo",
+  "url": "https://dog.ceo/dog-api/",
+  "description": "imagens de caes"
+}
+
+@content apis/04-thecatapi
+{
+  "name": "thecatapi",
+  "url": "https://api.thecatapi.com/v1/",
+  "description": "imagens de gatos"
+}
+
+@content apis/05-official-joke
+{
+  "name": "official-joke",
+  "url": "https://official-joke-api.appspot.com/",
+  "description": "piadas"
+}
+
+@content apis/06-quotable
+{
+  "name": "quotable",
+  "url": "https://api.quotable.io/",
+  "description": "citacoes"
+}
+
+@content apis/07-github-rest
+{
+  "name": "github-rest",
+  "url": "https://api.github.com/",
+  "description": "dados publicos do GitHub"
+}
+
+@content apis/08-nominatim
+{
+  "name": "nominatim",
+  "url": "https://nominatim.openstreetmap.org/",
+  "description": "geocodificacao OpenStreetMap"
+}
+
+@content apis/09-restcountries
+{
+  "name": "restcountries",
+  "url": "https://restcountries.com/v1/",
+  "description": "dados de paises"
+}
+
+@content apis/10-openlibrary
+{
+  "name": "openlibrary",
+  "url": "https://openlibrary.org/",
+  "description": "livros e metadados"
+}
+
+@content apis/11-pokeapi
+{
+  "name": "pokeapi",
+  "url": "https://pokeapi.co/",
+  "description": "dados de Pokemon"
+}
+
+@content apis/12-randomuser
+{
+  "name": "randomuser",
+  "url": "https://randomuser.me/api/",
+  "description": "usuarios ficticios"
+}
+
+@content apis/13-httpbin
+{
+  "name": "httpbin",
+  "url": "https://httpbin.org/",
+  "description": "testes de HTTP"
+}
+
+@content apis/14-ipify
+{
+  "name": "ipify",
+  "url": "https://api.ipify.org/",
+  "description": "IP publico"
+}
+
+@content apis/15-ipwho-is
+{
+  "name": "ipwho-is",
+  "url": "https://ipwho.is/",
+  "description": "geoip do IP"
+}
+
+@content apis/16-worldbank
+{
+  "name": "worldbank",
+  "url": "https://api.worldbank.org/",
+  "description": "dados economicos"
+}
+
+@content apis/17-gbif
+{
+  "name": "gbif",
+  "url": "https://api.gbif.org/v1/",
+  "description": "biodiversidade"
+}
+
+@content apis/18-coingecko
+{
+  "name": "coingecko",
+  "url": "https://api.coingecko.com/api/v3/",
+  "description": "criptomoedas"
+}
+
+@content apis/19-er-api
+{
+  "name": "er-api",
+  "url": "https://open.er-api.com/v6/latest/USD",
+  "description": "taxas de cambio"
+}
+
+@content apis/20-dictionaryapi
+{
+  "name": "dictionaryapi",
+  "url": "https://api.dictionaryapi.dev/api/v2/entries/en/",
+  "description": "dicionario ingles"
+}
+
+@content apis/21-spacex
+{
+  "name": "spacex",
+  "url": "https://api.spacexdata.com/v4/",
+  "description": "dados da SpaceX"
+}
+
+@content apis/22-advice-slip
+{
+  "name": "advice-slip",
+  "url": "https://api.adviceslip.com/",
+  "description": "conselhos"
+}
+
+@content apis/23-icanhazdadjoke
+{
+  "name": "icanhazdadjoke",
+  "url": "https://icanhazdadjoke.com/",
+  "description": "piadas de pai"
+}
+
+@content apis/24-openverse
+{
+  "name": "openverse",
+  "url": "https://api.openverse.org/v1/",
+  "description": "imagens livres"
+}
+
+@content apis/25-arxiv
+{
+  "name": "arxiv",
+  "url": "https://export.arxiv.org/api/",
+  "description": "papers e preprints"
+}
+
+@content mcps/01-filesystem
+{
+  "name": "filesystem",
+  "command": "npx -y @modelcontextprotocol/server-filesystem .",
+  "description": "acesso a arquivos locais"
+}
+
+@content mcps/02-memory
+{
+  "name": "memory",
+  "command": "npx -y @modelcontextprotocol/server-memory",
+  "description": "memoria persistente chave-valor"
+}
+
+@content mcps/03-sequential-thinking
+{
+  "name": "sequential-thinking",
+  "command": "npx -y @modelcontextprotocol/server-sequential-thinking",
+  "description": "raciocinio passo a passo"
+}
+
+@content mcps/04-git
+{
+  "name": "git",
+  "command": "npx -y @modelcontextprotocol/server-git",
+  "description": "operacoes git locais"
+}
+
+@content mcps/05-github
+{
+  "name": "github",
+  "command": "npx -y @modelcontextprotocol/server-github",
+  "description": "repositorios do GitHub"
+}
+
+@content mcps/06-postgres
+{
+  "name": "postgres",
+  "command": "npx -y @modelcontextprotocol/server-postgres",
+  "description": "consulta a PostgreSQL"
+}
+
+@content mcps/07-sqlite
+{
+  "name": "sqlite",
+  "command": "npx -y @modelcontextprotocol/server-sqlite",
+  "description": "consulta a SQLite"
+}
+
+@content mcps/08-fetch
+{
+  "name": "fetch",
+  "command": "npx -y mcp-server-fetch",
+  "description": "busca de paginas web"
+}
+
+@content mcps/09-puppeteer
+{
+  "name": "puppeteer",
+  "command": "npx -y @modelcontextprotocol/server-puppeteer",
+  "description": "automacao de navegador"
+}
+
+@content mcps/10-time
+{
+  "name": "time",
+  "command": "npx -y mcp-server-time",
+  "description": "fuso horario e relógio"
+}
+
+@content mcps/11-brave-search
+{
+  "name": "brave-search",
+  "command": "npx -y @modelcontextprotocol/server-brave-search",
+  "description": "busca web Brave"
+}
+
+@content mcps/12-slack
+{
+  "name": "slack",
+  "command": "npx -y @modelcontextprotocol/server-slack",
+  "description": "mensagens no Slack"
+}
+
+@content mcps/13-gdrive
+{
+  "name": "gdrive",
+  "command": "npx -y @modelcontextprotocol/server-gdrive",
+  "description": "arquivos do Google Drive"
+}
+
+@content mcps/14-everart
+{
+  "name": "everart",
+  "command": "npx -y @modelcontextprotocol/server-everart",
+  "description": "template MCP (ajuste o pacote)"
+}
+
+@content mcps/15-template-01
+{
+  "name": "template-01",
+  "command": "npx -y seu-mcp-01",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/16-template-02
+{
+  "name": "template-02",
+  "command": "npx -y seu-mcp-02",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/17-template-03
+{
+  "name": "template-03",
+  "command": "npx -y seu-mcp-03",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/18-template-04
+{
+  "name": "template-04",
+  "command": "npx -y seu-mcp-04",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/19-template-05
+{
+  "name": "template-05",
+  "command": "npx -y seu-mcp-05",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/20-template-06
+{
+  "name": "template-06",
+  "command": "npx -y seu-mcp-06",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/21-template-07
+{
+  "name": "template-07",
+  "command": "npx -y seu-mcp-07",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/22-template-08
+{
+  "name": "template-08",
+  "command": "npx -y seu-mcp-08",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/23-template-09
+{
+  "name": "template-09",
+  "command": "npx -y seu-mcp-09",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/24-template-10
+{
+  "name": "template-10",
+  "command": "npx -y seu-mcp-10",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content mcps/25-template-11
+{
+  "name": "template-11",
+  "command": "npx -y seu-mcp-11",
+  "description": "template MCP — troque pelo pacote real"
+}
+
+@content plugins/01-export-zip
+{
+  "name": "export-zip",
+  "version": "1.0",
+  "description": "exporta o Memory Manager como .zip"
+}
+
+@content plugins/02-markdown-plus
+{
+  "name": "markdown-plus",
+  "version": "1.0",
+  "description": "realce extra de markdown no chat"
+}
+
+@content plugins/03-tema-auto
+{
+  "name": "tema-auto",
+  "version": "1.0",
+  "description": "o tema segue o do sistema"
+}
+
+@content plugins/04-conta-tokens
+{
+  "name": "conta-tokens",
+  "version": "1.0",
+  "description": "mostra a contagem de tokens por mensagem"
+}
+
+@content plugins/05-auto-titulo
+{
+  "name": "auto-titulo",
+  "version": "1.0",
+  "description": "titulo automatico da conversa"
+}
+
+@content plugins/06-busca-historico
+{
+  "name": "busca-historico",
+  "version": "1.0",
+  "description": "busca textual no historico"
+}
+
+@content plugins/07-backup-auto
+{
+  "name": "backup-auto",
+  "version": "1.0",
+  "description": "backup automatico das conversas"
+}
+
+@content plugins/08-atalhos-extra
+{
+  "name": "atalhos-extra",
+  "version": "1.0",
+  "description": "mais atalhos de teclado"
+}
+
+@content plugins/09-voz-leitura
+{
+  "name": "voz-leitura",
+  "version": "1.0",
+  "description": "le as respostas em voz alta"
+}
+
+@content plugins/10-voz-ditado
+{
+  "name": "voz-ditado",
+  "version": "1.0",
+  "description": "ditado por voz no input"
+}
+
+@content plugins/11-export-md
+{
+  "name": "export-md",
+  "version": "1.0",
+  "description": "exporta a conversa em markdown"
+}
+
+@content plugins/12-tempo-resposta
+{
+  "name": "tempo-resposta",
+  "version": "1.0",
+  "description": "tempo de resposta por mensagem"
+}
+
+@content plugins/13-spellcheck-off
+{
+  "name": "spellcheck-off",
+  "version": "1.0",
+  "description": "desliga o corretor ortografico"
+}
+
+@content plugins/14-imagem-rapida
+{
+  "name": "imagem-rapida",
+  "version": "1.0",
+  "description": "atalho para gerar imagens"
+}
+
+@content plugins/15-offline-badge
+{
+  "name": "offline-badge",
+  "version": "1.0",
+  "description": "selo nas mensagens OFFLINE"
+}
+
+@content plugins/16-simulite-tuner
+{
+  "name": "simulite-tuner",
+  "version": "1.0",
+  "description": "expoe ajustes do Simulite"
+}
+
+@content plugins/17-tags-report
+{
+  "name": "tags-report",
+  "version": "1.0",
+  "description": "relatorio das tags do site"
+}
+
+@content plugins/18-env-switcher
+{
+  "name": "env-switcher",
+  "version": "1.0",
+  "description": "troca a BASE_URL rapidamente"
+}
+
+@content plugins/19-model-pins
+{
+  "name": "model-pins",
+  "version": "1.0",
+  "description": "fixa modelos favoritos no topo"
+}
+
+@content plugins/20-limpa-cache
+{
+  "name": "limpa-cache",
+  "version": "1.0",
+  "description": "limpa caches locais"
+}
+
+@content plugins/21-json-view
+{
+  "name": "json-view",
+  "version": "1.0",
+  "description": "visualiza JSON colado no chat"
+}
+
+@content plugins/22-code-copy
+{
+  "name": "code-copy",
+  "version": "1.0",
+  "description": "botao copiar em todo bloco de codigo"
+}
+
+@content plugins/23-linhas-numeradas
+{
+  "name": "linhas-numeradas",
+  "version": "1.0",
+  "description": "numera linhas nos blocos de codigo"
+}
+
+@content plugins/24-emoji-md
+{
+  "name": "emoji-md",
+  "version": "1.0",
+  "description": "atalhos de emoji em markdown"
+}
+
+@content plugins/25-log-export
+{
+  "name": "log-export",
+  "version": "1.0",
+  "description": "exporta o log de comandos"
+}
+
+@content skills/01-revisar-codigo
+# Skill: revisar-codigo
+
+Descrição: aponta problemas em um codigo enviado.
+
+Prompt: quando o usuário pedir para aponta problemas em um codigo enviado, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/02-gerar-testes
+# Skill: gerar-testes
+
+Descrição: gera testes para um script.
+
+Prompt: quando o usuário pedir para gera testes para um script, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/03-traduzir
+# Skill: traduzir
+
+Descrição: traduz texto mantendo o tom.
+
+Prompt: quando o usuário pedir para traduz texto mantendo o tom, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/04-resumir
+# Skill: resumir
+
+Descrição: resume um texto longo em topicos.
+
+Prompt: quando o usuário pedir para resume um texto longo em topicos, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/05-explicar-codigo
+# Skill: explicar-codigo
+
+Descrição: explica codigo linha a linha.
+
+Prompt: quando o usuário pedir para explica codigo linha a linha, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/06-nomear-arquivos
+# Skill: nomear-arquivos
+
+Descrição: sugere nomes consistentes.
+
+Prompt: quando o usuário pedir para sugere nomes consistentes, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/07-mensagem-commit
+# Skill: mensagem-commit
+
+Descrição: escreve mensagem de commit.
+
+Prompt: quando o usuário pedir para escreve mensagem de commit, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/08-docstring
+# Skill: docstring
+
+Descrição: escreve documentacao de funcoes.
+
+Prompt: quando o usuário pedir para escreve documentacao de funcoes, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/09-converter
+# Skill: converter
+
+Descrição: converte codigo entre linguagens.
+
+Prompt: quando o usuário pedir para converte codigo entre linguagens, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/10-estruturar
+# Skill: estruturar
+
+Descrição: transforma ideias em plano executavel.
+
+Prompt: quando o usuário pedir para transforma ideias em plano executavel, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/11-comparar
+# Skill: comparar
+
+Descrição: compara dois arquivos e lista diferencas.
+
+Prompt: quando o usuário pedir para compara dois arquivos e lista diferencas, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/12-debug
+# Skill: debug
+
+Descrição: checklist de depuracao para um erro.
+
+Prompt: quando o usuário pedir para checklist de depuracao para um erro, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/13-ler-json
+# Skill: ler-json
+
+Descrição: explica um JSON complexo.
+
+Prompt: quando o usuário pedir para explica um JSON complexo, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/14-readme
+# Skill: readme
+
+Descrição: monta README completo.
+
+Prompt: quando o usuário pedir para monta README completo, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/15-release
+# Skill: release
+
+Descrição: checklist de release.
+
+Prompt: quando o usuário pedir para checklist de release, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/16-limpar
+# Skill: limpar
+
+Descrição: remove codigo morto com seguranca.
+
+Prompt: quando o usuário pedir para remove codigo morto com seguranca, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/17-padronizar
+# Skill: padronizar
+
+Descrição: padroniza indentacao e aspas.
+
+Prompt: quando o usuário pedir para padroniza indentacao e aspas, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/18-extrair
+# Skill: extrair
+
+Descrição: extrai dados de um texto.
+
+Prompt: quando o usuário pedir para extrai dados de um texto, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/19-prompt
+# Skill: prompt
+
+Descrição: monta um system prompt sob medida.
+
+Prompt: quando o usuário pedir para monta um system prompt sob medida, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/20-api-test
+# Skill: api-test
+
+Descrição: monta teste de API via curl.
+
+Prompt: quando o usuário pedir para monta teste de API via curl, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/21-otimizar
+# Skill: otimizar
+
+Descrição: sugere otimizacoes de performance.
+
+Prompt: quando o usuário pedir para sugere otimizacoes de performance, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/22-email
+# Skill: email
+
+Descrição: escreve e-mail profissional.
+
+Prompt: quando o usuário pedir para escreve e-mail profissional, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/23-planilha
+# Skill: planilha
+
+Descrição: transforma texto em tabela.
+
+Prompt: quando o usuário pedir para transforma texto em tabela, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/24-resumo-pagina
+# Skill: resumo-pagina
+
+Descrição: resume o conteudo colado de uma pagina.
+
+Prompt: quando o usuário pedir para resume o conteudo colado de uma pagina, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@content skills/25-ensejar
+# Skill: ensejar
+
+Descrição: explica um conceito com exemplos.
+
+Prompt: quando o usuário pedir para explica um conceito com exemplos, faça isso em português brasileiro,
+com passos curtos e um exemplo final. Nunca invente dados — declare suposições.
+
+@file files/01-guia-offline.md
+# Guia do modo OFFLINE
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/01-guia-offline.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/02-checklist-deploy.md
+# Checklist de deploy
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/02-checklist-deploy.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/03-dicas-lm-studio.md
+# Dicas de LM Studio
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/03-dicas-lm-studio.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/04-estrutura-projeto.md
+# Estrutura do projeto
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/04-estrutura-projeto.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/05-backup.md
+# Rotina de backup
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/05-backup.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/06-convencoes.md
+# Convencoes de codigo
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/06-convencoes.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/07-env.md
+# Segredos e .env
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/07-env.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/08-logs.md
+# Log de comandos
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/08-logs.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/09-tags.md
+# Guia das tags
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/09-tags.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/10-memory.md
+# Memory Manager
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/10-memory.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/11-simulite.md
+# Simulite-Message
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/11-simulite.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/12-gguf.md
+# Notas sobre GGUF
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/12-gguf.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/13-portabilidade.md
+# Portabilidade do site
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/13-portabilidade.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/14-testes.md
+# Testes locais
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/14-testes.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/15-powershell.md
+# Atalhos de PowerShell
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/15-powershell.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/16-performance.md
+# Performance do chat
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/16-performance.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/17-acessibilidade.md
+# Acessibilidade
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/17-acessibilidade.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/18-imagens.md
+# Gerador de imagens
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/18-imagens.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/19-api-guia.md
+# Guia da API
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/19-api-guia.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/20-teclado.md
+# Atalhos de teclado
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/20-teclado.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/21-mobile.md
+# Uso no celular
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/21-mobile.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/22-solucao-problemas.md
+# Solucao de problemas
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/22-solucao-problemas.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/23-roadmap.md
+# Roadmap
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/23-roadmap.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/24-contribuindo.md
+# Contribuindo
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/24-contribuindo.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.
+
+@file files/25-changelog.md
+# Changelog
+
+Parte do System Memory (system-memory/files).
+Edite só as linhas que precisar:
+  node tools/system-memory.js edit-lines system-memory/files/25-changelog.md --lines 3-3 --content-file novo.txt
+Conteúdo inicial criado pelo init — troque pelo guia real quando quiser.

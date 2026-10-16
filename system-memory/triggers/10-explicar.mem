@@ -1,0 +1,2 @@
+// trigger explicar — dispara quando a mensagem contém "explique"
+@trigger explicar when "explique" do save

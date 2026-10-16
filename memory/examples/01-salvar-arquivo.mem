@@ -1,0 +1,15 @@
+@memory exemplo-01-salvar-arquivo 2.0
+// Exemplo 01: salvar um arquivo simples na pasta virtual
+// IA responde com este bloco e o site salva automaticamente
+
+@file guia/bolo-cenoura.txt
+Bolo de cenoura fofinho:
+- 3 cenouras medias
+- 2 xicaras de acucar
+- 3 ovos
+Preparo: bata tudo, asse 40min a 180C.
+@end
+
+@content receitas
+Bolo de cenoura salvo em guia/bolo-cenoura.txt
+@end

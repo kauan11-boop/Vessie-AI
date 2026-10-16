@@ -1,0 +1,5 @@
+{
+  "name": "brave-search",
+  "command": "npx -y @modelcontextprotocol/server-brave-search",
+  "description": "busca web Brave"
+}

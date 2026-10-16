@@ -1,0 +1,40 @@
+# js/agent/agents.vessie.yml
+
+module: agent/agents
+version: "1.0.0"
+description: >
+  Gestão de agents (personas com prompt + instruções).
+  Exporta saveAgent(), setAgentStatus() e renderAgentList().
+
+imports:
+  - ../state/state.js
+  - ../config/config.js
+
+exports:
+  - setAgentStatus
+  - renderAgentList
+  - saveAgent
+
+methods:
+  setAgentStatus:
+    description: "Atualiza status do agent no badge"
+    params:
+      - status: string (busy|done|hide)
+    returns: void
+
+  renderAgentList:
+    description: "Renderiza lista de agents na sidebar"
+    params: []
+    returns: void
+
+  saveAgent:
+    description: "Salva agent via modal"
+    params: []
+    returns: void
+
+depends:
+  - state
+
+issues:
+  - "Método saveAgent depende de DOM (IDs de inputs no modal)"
+  - "Falta validação de campos do agent"

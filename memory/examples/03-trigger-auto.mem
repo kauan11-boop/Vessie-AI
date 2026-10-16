@@ -1,0 +1,9 @@
+@memory exemplo-03-trigger-auto 2.0
+// Exemplo 03: trigger que auto-salva toda resposta com bloco de codigo
+
+@trigger auto-save-codigo when "```" do save-code
+
+@script listar-codigos lang js
+const files = Memory.listFiles().filter(f => f.path.indexOf("code/") === 0);
+return files.map(f => f.path).join("\n") || "(nenhum codigo salvo ainda)";
+@end

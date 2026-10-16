@@ -1,0 +1,53 @@
+# js/chat/renderChat.vessie.yml
+
+module: chat/renderChat
+version: "1.0.0"
+description: >
+  Funções de renderização de chat, sanitização de markdown,
+  calculo de tokens e rolagem automática.
+
+imports:
+  - ../state/state.js
+  - ../config/config.js
+
+exports:
+  - activeChat
+  - escapeHtml
+  - renderMarkdownSafe
+  - scrollBottom
+  - updateTokenBadge
+
+methods:
+  activeChat:
+    description: "Retorna a conversa ativa"
+    params: []
+    returns: object|null
+
+  escapeHtml:
+    description: "Escape de caracteres HTML para segurança"
+    params:
+      - s: string
+    returns: string
+
+  renderMarkdownSafe:
+    description: "Renderiza markdown com sanitização (DOMPurify)"
+    params:
+      - md: string
+    returns: string
+
+  scrollBottom:
+    description: "Rola a área de chat para o final"
+    params: []
+    returns: void
+
+  updateTokenBadge:
+    description: "Atualiza o badge de contagem de tokens"
+    params: []
+    returns: void
+
+depends: []
+
+issues:
+  - "activeChat, scrollBottom, updateTokenBadge duplicados em outro arquivo"
+  - "renderMarkdownSafe usa window.marked e window.DOMPurify (não inicializados)"
+  - "Faltam JSDoc em todos os métodos"

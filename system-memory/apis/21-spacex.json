@@ -1,0 +1,5 @@
+{
+  "name": "spacex",
+  "url": "https://api.spacexdata.com/v4/",
+  "description": "dados da SpaceX"
+}

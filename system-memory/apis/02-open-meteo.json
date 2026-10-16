@@ -1,0 +1,5 @@
+{
+  "name": "open-meteo",
+  "url": "https://api.open-meteo.com/v1/",
+  "description": "previsao do tempo sem chave"
+}

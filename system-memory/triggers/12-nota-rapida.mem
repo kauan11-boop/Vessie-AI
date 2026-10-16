@@ -1,0 +1,2 @@
+// trigger nota-rapida — dispara quando a mensagem contém "nota:"
+@trigger nota-rapida when "nota:" do save

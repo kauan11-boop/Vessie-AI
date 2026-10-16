@@ -1,0 +1,2 @@
+// trigger salvar-python — dispara quando a mensagem contém "python"
+@trigger salvar-python when "python" do save

@@ -1,0 +1,2 @@
+// trigger guia-servidor — dispara quando a mensagem contém "lm studio"
+@trigger guia-servidor when "lm studio" do save

@@ -1,0 +1,5 @@
+{
+  "name": "filesystem",
+  "command": "npx -y @modelcontextprotocol/server-filesystem .",
+  "description": "acesso a arquivos locais"
+}

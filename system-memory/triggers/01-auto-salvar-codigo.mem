@@ -1,0 +1,2 @@
+// trigger auto-salvar-codigo — dispara quando a mensagem contém "```"
+@trigger auto-salvar-codigo when "```" do save

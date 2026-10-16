@@ -1,0 +1,5 @@
+{
+  "name": "worldbank",
+  "url": "https://api.worldbank.org/",
+  "description": "dados economicos"
+}

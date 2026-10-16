@@ -1,0 +1,2 @@
+// trigger salvar-javascript — dispara quando a mensagem contém "javascript"
+@trigger salvar-javascript when "javascript" do save

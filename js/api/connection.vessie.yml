@@ -1,0 +1,88 @@
+# js/api/connection.vessie.yml
+
+module: api/connection
+version: "1.0.0"
+description: >
+  Conexão REST com LM Studio e gestão de modelos.
+  Exporta api(), checkConnection(), refreshModels() e helpers.
+
+imports:
+  - ../config/config.js
+  - ../state/state.js
+  - ../chat/renderChat.js
+
+exports:
+  - api
+  - checkConnection
+  - refreshModels
+  - showConnError
+  - activeChat
+  - newChat
+  - switchChat
+  - deleteChat
+  - clearCurrentChat
+  - startRename
+
+methods:
+  api:
+    description: "Requisição fetch genérica com timeout"
+    params:
+      - path: string
+      - opts: object
+    returns: Promise<Response>
+
+  checkConnection:
+    description: "Testa conexão com LM Studio"
+    params:
+      - silent: boolean (optional)
+    returns: Promise<boolean>
+
+  refreshModels:
+    description: "Recarrega lista de modelos"
+    params: []
+    returns: Promise<void>
+
+  showConnError:
+    description: "Mostra erro de conexão na UI"
+    params:
+      - e: Error
+    returns: void
+
+  activeChat:
+    description: "Retorna conversa ativa"
+    params: []
+    returns: object|null
+
+  newChat:
+    description: "Cria nova conversa"
+    params: []
+    returns: void
+
+  switchChat:
+    description: "Troca de conversa ativa"
+    params:
+      - id: string
+    returns: void
+
+  deleteChat:
+    description: "Remove conversa"
+    params:
+      - id: string
+    returns: void
+
+  clearCurrentChat:
+    description: "limpa mensagens da conversa ativa"
+    params: []
+    returns: void
+
+  startRename:
+    description: "começa renomear uma conversa"
+    params:
+      - id: string
+    returns: void
+
+depends: []
+
+issues:
+  - "Duas implementações de redimensionamento de chat duplicadas em conflito"
+  - "Funções ativas e de chat misturam responsabilidades (UI + state + DOM)"

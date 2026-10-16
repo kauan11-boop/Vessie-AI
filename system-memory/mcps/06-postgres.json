@@ -1,0 +1,5 @@
+{
+  "name": "postgres",
+  "command": "npx -y @modelcontextprotocol/server-postgres",
+  "description": "consulta a PostgreSQL"
+}

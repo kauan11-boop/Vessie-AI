@@ -1,0 +1,2 @@
+// trigger git-status — dispara quando a mensagem contém "git"
+@trigger git-status when "git" do save

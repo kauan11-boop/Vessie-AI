@@ -1,0 +1,2 @@
+// trigger deploy — dispara quando a mensagem contém "deploy"
+@trigger deploy when "deploy" do save

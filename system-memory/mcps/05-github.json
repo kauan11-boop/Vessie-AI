@@ -1,0 +1,5 @@
+{
+  "name": "github",
+  "command": "npx -y @modelcontextprotocol/server-github",
+  "description": "repositorios do GitHub"
+}

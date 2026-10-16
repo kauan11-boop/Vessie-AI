@@ -1,0 +1,2 @@
+// trigger resumir-conversa — dispara quando a mensagem contém "resuma"
+@trigger resumir-conversa when "resuma" do save

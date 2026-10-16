@@ -1,0 +1,5 @@
+{
+  "name": "time",
+  "command": "npx -y mcp-server-time",
+  "description": "fuso horario e relógio"
+}

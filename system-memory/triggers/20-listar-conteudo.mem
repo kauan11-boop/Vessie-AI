@@ -1,0 +1,2 @@
+// trigger listar-conteudo — dispara quando a mensagem contém "liste"
+@trigger listar-conteudo when "liste" do run

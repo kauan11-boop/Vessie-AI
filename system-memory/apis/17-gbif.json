@@ -1,0 +1,5 @@
+{
+  "name": "gbif",
+  "url": "https://api.gbif.org/v1/",
+  "description": "biodiversidade"
+}

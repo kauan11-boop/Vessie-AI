@@ -1,0 +1,2 @@
+// trigger ajuda-rapida — dispara quando a mensagem contém "ajuda"
+@trigger ajuda-rapida when "ajuda" do help

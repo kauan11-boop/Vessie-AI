@@ -1,0 +1,2 @@
+// trigger executar-sys — dispara quando a mensagem contém "sys:"
+@trigger executar-sys when "sys:" do run

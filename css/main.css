@@ -1,0 +1,39 @@
+/* main.css - Estilo principal, variáveis e reset */
+:root {
+  --radius: 14px;
+  --blur: blur(20px);
+  --accent: #C15F3C;
+  --accent-cyan: #0D8C6D;
+  --bg: #FAF7EF;
+  --bg2: #F3EEE1;
+  --sidebar: #F1EBDB;
+  --panel: #FFFFFF;
+  --user-msg: #ECE5D2;
+  --text: #211D19;
+  --text2: #5E584E;
+  --muted: #9A917D;
+  --border: #DED4BA;
+  --danger: #B3261E;
+  --ok: #0D8C6D;
+  --warn: #B26A00;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0 }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+body { overflow-x: hidden }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 99px }
+::-webkit-scrollbar-thumb:hover { background: var(--text2) }
+
+/* Focus */
+*:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+
+/* Selection */
+::selection { background: var(--accent); color: #0f0f1a; }
+
+/* Transitions */
+.transition { transition: all .15s ease }
+.transition-fast { transition: all .1s ease }

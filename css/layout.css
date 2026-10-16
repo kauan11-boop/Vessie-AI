@@ -1,0 +1,175 @@
+/* layout.css - Layout da aplicação */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Sidebar */
+#sidebar { width: 290px; min-width: 290px; background: var(--sidebar); border-right: 1px solid var(--border); height: 100vh; flex-shrink: 0; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; display: flex; flex-direction: column; overflow: hidden; }
+#sidebar.collapsed { transform: translateX(-290px) }
+#sidebar.expanded { transform: translateX(0) }
+
+#sidebar .logo { padding: 20px 16px; display: flex; align-items: center; gap: 12px; text-align: left }
+#sidebar .logo-mascot { width: 42px; height: 42px; flex-shrink: 0; display: block; animation: sideMascotFloat 3s ease-in-out infinite; filter: drop-shadow(0 0 8px rgba(193,95,60,.4)); }
+@keyframes sideMascotFloat {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-4px) rotate(3deg); }
+}
+#sidebar .logo-text { min-width: 0; }
+.logo h1 { font-size: 15px; font-weight: 700; letter-spacing: .2px; color: var(--text) }
+.logo small { display: block; font-size: 11px; color: var(--muted); font-weight: 400 }
+
+.sidebar-actions { padding: 0 14px 10px; display: flex; gap: 8px }
+.sidebar-actions .btn { padding: 8px 12px; font-size: 12px }
+.sidebar-actions .btn.primary { flex: 1; justify-content: center; }
+
+.chat-list, #chatList { flex: 1 1 auto; overflow-y: auto; min-height: 0; padding: 4px 10px; display: flex; flex-direction: column; gap: 2px }
+
+.sidebar-footer { margin-top: auto; flex-shrink: 0; padding: 12px 14px; border-top: 1px solid var(--border); background: var(--sidebar); display: flex; flex-direction: column; gap: 8px; }
+.sidebar-footer .btn { justify-content: center; }
+
+/* Main Area */
+#main { flex: 1; margin-left: 290px; transition: margin-left .28s; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+#sidebar.collapsed ~ #main { margin-left: 0 }
+
+/* Overlay */
+#overlay { display: none; }
+#overlay.active { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
+
+/* Header */
+.app-header, .topbar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--bg); flex-wrap: nowrap; flex-shrink: 0; }
+.app-header .logo { padding: 0; }
+#sidebarToggleBtn { flex-shrink: 0; }
+.app-header .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex: 1; min-width: 0; }
+.app-header .header-actions-right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+.topbar .model-select, .app-header .model-select { position: relative; display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; font-size: 13px; min-width: 0; }
+.topbar .model-btn, .app-header .model-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text); cursor: pointer; font-family: inherit; font-size: 13px; max-width: 200px; min-width: 0; }
+.topbar .model-btn-label, .app-header .model-btn-label, #modelBtnLabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; max-width: 140px; }
+.topbar .badge, .app-header .badge, .badge { font-size: 11px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+.topbar .badge.stream-on, .app-header .badge.stream-on { color: var(--accent-cyan); border-color: rgba(34,211,238,.4) }
+
+/* Telas estreitas: esconde selos para o header continuar em 1 linha */
+@media (max-width: 900px) {
+  #streamBadge { display: none; }
+}
+@media (max-width: 640px) {
+  #connBadge { display: none; }
+}
+
+/* Chat Area */
+#chatArea, .chat-area { flex: 1 1 auto; overflow-y: auto; min-height: 0; max-width: 800px; width: 100%; margin: 0 auto; padding: 18px 24px 24px; display: flex; flex-direction: column; gap: 16px }
+.messages { display: flex; flex-direction: column; gap: 8px }
+
+/* Input Zone */
+.input-zone { flex-shrink: 0; margin-top: auto; position: sticky; bottom: 0; z-index: 5; padding: 12px 24px 20px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); border-top: 1px solid var(--border); max-width: 848px; width: 100%; margin-left: auto; margin-right: auto; }
+.params-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px }
+.param-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 99px; padding: 5px 12px; background: rgba(255,255,255,.02) }
+.param-chip input { width: 52px; background: none; border: none; outline: none; color: var(--text); font-family: inherit; font-size: 12px }
+
+/* Input Wrapper */
+.input-wrapper { background: var(--panel); border: 1px solid var(--border); border-radius: 26px; padding: 8px 8px 8px 20px; display: flex; align-items: flex-end; gap: 8px; transition: .2s; box-shadow: 0 2px 12px rgba(0,0,0,.06) }
+.input-wrapper:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(193,95,60,.12) }
+.input-wrapper textarea { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: inherit; font-size: 14.5px; resize: none; min-height: 24px; max-height: 140px; height: 38px; line-height: 1.5; padding: 8px 0; overflow-y: auto; }
+.input-wrapper textarea:focus { background: transparent; }
+
+/* Send Button */
+.send-btn { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--accent); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; transition: .15s }
+.send-btn:hover:not(:disabled) { transform: scale(1.06) }
+.send-btn:disabled { opacity: .3; cursor: default }
+
+/* Memory Manager — página dedicada (#/memory) */
+#memoryPage { min-height: 100vh; max-width: 920px; margin: 0 auto; padding: 20px clamp(12px, 4vw, 24px) 40px; flex-direction: column; }
+body:not(.view-memory) #memoryPage { display: none; }
+body.view-memory #memoryPage { display: flex; }
+body.view-memory #sidebar, body.view-memory #main, body.view-memory #overlay,
+body.view-memory #codeDrawer, body.view-memory #drawerScrim { display: none; }
+.mem-page-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+.mem-page-head .btn { flex-shrink: 0; }
+.mem-page-title { flex: 1 1 220px; min-width: 0; }
+.mem-page-title h1 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.mem-page-title small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+#memoryPage .sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; line-height: 1.5; }
+/* Memory Manager — sidebar lateral + conteúdo */
+.mem-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 16px; align-items: start; }
+.mem-side { display: flex; flex-direction: column; gap: 6px; position: sticky; top: 16px; }
+.mem-nav { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: 1px solid transparent; color: #cfcfe0; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-weight: 500; cursor: pointer; font-family: inherit; text-align: left; transition: background .15s, border-color .15s, color .15s; }
+.mem-nav i { width: 18px; text-align: center; color: #8f8fa5; flex-shrink: 0; }
+.mem-nav span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mem-nav:hover { background: rgba(255,255,255,.05); }
+.mem-nav.active { background: rgba(124,92,240,.18); border-color: #7c5cf0; color: #fff; }
+.mem-nav.active i { color: #c9b8ff; }
+.mem-count { font-size: 11px; font-weight: 700; background: rgba(127,127,127,.18); color: #b9b9c7; border-radius: 99px; padding: 1px 8px; flex-shrink: 0; }
+.mem-nav.active .mem-count { background: #7c5cf0; color: #fff; }
+.mem-content { min-width: 0; }
+.mem-page-tabs .settings-tab { flex: 1; }
+#memoryPage .mem-page-head .btn.icon { background: #7c5cf0; border-color: #7c5cf0; color: #fff; }
+#memoryPage .mem-page-head .btn.icon:hover { filter: brightness(1.12); }
+#memoryPage .mem-pane { max-height: none; overflow: visible; }
+#memoryPage .mem-pane h4 { font-family: 'JetBrains Mono', monospace; font-size: 13px; margin-bottom: 10px; }
+
+/* Memory Manager — tema próprio preto & branco & roxo */
+body.view-memory { background: #0b0b12; }
+#memoryPage { background: radial-gradient(1100px 480px at 15% -5%, rgba(167,139,250,.16), transparent 60%), #0b0b12; color: #f4f4f6; }
+.mem-mascot { width: 58px; height: 58px; flex-shrink: 0; animation: memFloat 3.2s ease-in-out infinite; filter: drop-shadow(0 0 14px rgba(167,139,250,.55)); }
+@keyframes memFloat {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+.mem-page-title h1 { color: #fff; }
+.mem-page-title small { color: #b9b9c7; }
+#memoryPage .sub { color: #b9b9c7; }
+#memoryPage .sub code { background: rgba(167,139,250,.15); color: #c9b8ff; }
+#memoryPage .settings-tab { border-color: #3a3a4d; color: #cfcfe0; }
+#memoryPage .settings-tab.active { background: #7c5cf0; border-color: #7c5cf0; }
+#memoryPage .mem-row { background: rgba(255,255,255,.03); border-color: #2c2c3d; animation: memRowIn .35s ease-out backwards; }
+#memoryPage .mem-row:nth-child(2) { animation-delay: .05s; }
+#memoryPage .mem-row:nth-child(3) { animation-delay: .1s; }
+#memoryPage .mem-row:nth-child(4) { animation-delay: .15s; }
+#memoryPage .mem-row:nth-child(5) { animation-delay: .2s; }
+#memoryPage .mem-row:nth-child(6) { animation-delay: .25s; }
+#memoryPage .mem-row:nth-child(7) { animation-delay: .3s; }
+#memoryPage .mem-row:nth-child(8) { animation-delay: .35s; }
+@keyframes memRowIn {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: none; }
+}
+#memoryPage .mem-row-name { color: #fff; }
+#memoryPage .mem-row-meta { color: #9a9ab0; }
+#memoryPage .mini-btn { border-color: #3a3a4d; color: #d6d6e6; }
+#memoryPage .mini-btn:hover { border-color: #7c5cf0; color: #fff; }
+#memoryPage .btn.primary { background: #7c5cf0; border-color: #7c5cf0; }
+#memoryPage .empty-state { color: #8f8fa5; }
+#memoryPage .empty-state code { color: #c9b8ff; background: rgba(167,139,250,.15); }
+#memoryPage .prompt-block { background: #101018; border-color: #2c2c3d; color: #e8e8f0; }
+@media (prefers-reduced-motion: reduce) {
+  .mem-mascot, #memoryPage .mem-row { animation: none !important; }
+}
+
+/* Memory Manager — responsivo (100% CSS, sem JS: reajuste autônomo) */
+@media (min-width: 1280px) {
+  #memoryPage { max-width: 1080px; }
+}
+@media (max-width: 900px) {
+  .mem-layout { grid-template-columns: 1fr; }
+  .mem-side { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+  .mem-nav { width: auto; flex-shrink: 0; }
+}
+@media (max-width: 640px) {
+  .mem-mascot { width: 44px; height: 44px; }
+  .mem-page-title { flex-basis: 160px; }
+  .mem-page-title h1 { font-size: 17px; }
+  .mem-page-head .btn { padding: 8px 10px; font-size: 12px; }
+  .mem-row { flex-wrap: wrap; row-gap: 4px; }
+  .mem-row-meta { width: 100%; }
+  .mem-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  .mem-page-head .btn { flex: 1 1 100%; justify-content: center; }
+  .mem-mascot { width: 38px; height: 38px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #memoryPage { padding-top: 12px; }
+  .mem-mascot { width: 36px; height: 36px; animation: none; }
+  .mem-page-title h1 { font-size: 16px; }
+}
+
+/* Disclaimer */
+.disclaimer { text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.5 }
+.disclaimer a { color: var(--accent-cyan); text-decoration: none }

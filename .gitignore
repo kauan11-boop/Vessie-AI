@@ -1,0 +1,6 @@
+# descarta logs locais
+*.log
+.DS_Store
+
+# segredos de API — o site usa o js/env-config.js gerado, nunca o .env
+.env

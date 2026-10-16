@@ -1,0 +1,50 @@
+# js/image/image-gen.vessie.yml
+
+module: image/image-gen
+version: "1.0.0"
+description: >
+  Geração de imagens via API Pollinations (gratuita, sem chave).
+  Exporta isImageRequest(), buildImagePayload(), buildImageCard().
+
+imports:
+  - ../config/config.js
+
+exports:
+  - isImageRequest
+  - buildImagePayload
+  - buildImageCard
+  - copyImageUrl
+
+methods:
+  isImageRequest:
+    description: "Detecta se a mensagem é um pedido de imagem"
+    params:
+      - text: string
+    returns: boolean
+
+  buildImagePayload:
+    description: "Converte mensagem em payload de imagem"
+    params:
+      - chat: object
+      - userMessage: string
+    returns: object|null
+
+  buildImageCard:
+    description: "Gera HTML de card de imagem"
+    params:
+      - url: string
+      - prompt: string
+      - metadata: object
+    returns: string
+
+  copyImageUrl:
+    description: "Copia URL da imagem para clipboard"
+    params:
+      - btn: HTMLElement
+    returns: void
+
+depends: []
+
+notes:
+  - "API: https://api.pollinations.net/img (sem chave)"
+  - "Múltiplos padrões de detecção: /imagine, create image, genere uma imagem"

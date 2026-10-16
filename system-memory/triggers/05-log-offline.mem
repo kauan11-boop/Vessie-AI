@@ -1,0 +1,2 @@
+// trigger log-offline — dispara quando a mensagem contém "offline"
+@trigger log-offline when "offline" do save

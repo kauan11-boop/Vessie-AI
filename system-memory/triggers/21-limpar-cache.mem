@@ -1,0 +1,2 @@
+// trigger limpar-cache — dispara quando a mensagem contém "limpe"
+@trigger limpar-cache when "limpe" do save

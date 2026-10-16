@@ -1,0 +1,15 @@
+@memory exemplo-04-sistema-reutilizavel 2.0
+// Exemplo 04: salva um mini-app completo e reutilizavel
+
+@file apps/calculadora.html
+<!doctype html><meta charset="utf-8"><h1>Calc</h1><input id=a><input id=b><button onclick="alert(+a.value + +b.value)">+</button>
+@end
+
+@file apps/calculadora.uso.txt
+Para reutilizar: Memory.getFile("apps/calculadora.html").content
+Ou clique em Reutilizar no painel Memory > Arquivos.
+@end
+
+@content sistemas
+Mini-app calculadora em apps/calculadora.html
+@end

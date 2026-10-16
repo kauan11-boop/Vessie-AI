@@ -1,0 +1,9 @@
+@memory exemplo-02-executar-js 2.0
+// Exemplo 02: IA executa JS no console do site
+// O bloco @run js roda em sandbox e devolve o resultado no chat
+
+@run js
+const soma = 2 + 2;
+Memory.putFile("teste/soma.txt", "2+2=" + soma);
+return "soma=" + soma + " | arquivo teste/soma.txt salvo";
+@end

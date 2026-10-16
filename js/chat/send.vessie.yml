@@ -1,0 +1,67 @@
+# js/chat/send.vessie.yml
+
+module: chat/send
+version: "1.0.0"
+author: Vessie AI Chat
+description: >
+  Módulo responsável pelo envio de mensagens, streaming SSE,
+  cancelamento de geração, voz síncrona e otimização de prompts.
+
+imports:
+  - ../modules/NaturalPromptOptimizer.js
+  - ../modules/VoiceSynthesis.js
+  - ../config/config.js
+  - ../state/state.js
+  - ../api/connection.js
+  - ../image/image-gen.js
+
+exports:
+  - sendMessage
+  - regenerate
+  - stopGeneration
+  - onSendBtn
+
+methods:
+  sendMessage:
+    description: "Envia mensagem ao LM Studio com streaming SSE"
+    params:
+      - text: string
+    returns: Promise<void>
+    steps:
+      - "Marcar estado de geração (state.isGenerating = true)"
+      - "Adicionar mensagem do usuário ao estado (Storage.addMessage)"
+      - "Verificar conexão via checkLMStudioConnection"
+      - "Chamada generateResponse com payload otimizado"
+      - "Calcular e exibir token badge"
+      - "Focar no campo de input"
+
+  regenerate:
+    description: "Regenerar última resposta do bot"
+    params: []
+    returns: Promise<void>
+    steps:
+      - "Buscar última mensagem do assistente"
+      - "Recriar payload com os mesmos argumentos"
+      - "Reenviar para LM Studio"
+
+  stopGeneration:
+    description: "Parar geração em progresso"
+    params: []
+    returns: Promise<void>
+    steps:
+      - "Abortar controller (abortCtrl.abort)"
+      - "Cancelar leitor SSE"
+      - "Parar síntese de voz"
+      - "Resetar estado de geração"
+
+depends:
+  - NaturalPromptOptimizer
+  - VoiceSynthesis
+  - ConnectionQuality
+  - ImageGeneration
+
+notes:
+  - "Evitar innerHTML em contextos de usuário; usar textContent"
+  - "API key deve ser 'lm-studio' (LM Studio aceita qualquer valor)"
+  - "Fluxo de streaming: reader + TextDecoder + split lines + JSON.parse"
+  - "Duas abordagens de streaming (EventSource vs reader) coexistindo; unificar"

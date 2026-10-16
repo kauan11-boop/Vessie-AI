@@ -1,0 +1,5 @@
+{
+  "name": "github-rest",
+  "url": "https://api.github.com/",
+  "description": "dados publicos do GitHub"
+}

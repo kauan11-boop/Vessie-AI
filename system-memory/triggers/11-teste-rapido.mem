@@ -1,0 +1,2 @@
+// trigger teste-rapido — dispara quando a mensagem contém "teste"
+@trigger teste-rapido when "teste" do save
