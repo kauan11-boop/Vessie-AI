@@ -1,2 +1,0 @@
-// trigger traduzir-en — dispara quando a mensagem contém "traduza"
-@trigger traduzir-en when "traduza" do save

@@ -1,2 +1,0 @@
-// trigger ler-arquivo — dispara quando a mensagem contém "ler "
-@trigger ler-arquivo when "ler " do read

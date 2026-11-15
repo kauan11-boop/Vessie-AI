@@ -1,2 +1,0 @@
-// trigger imagem-auto — dispara quando a mensagem contém "imagem"
-@trigger imagem-auto when "imagem" do save

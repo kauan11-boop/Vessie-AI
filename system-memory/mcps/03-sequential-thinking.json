@@ -1,5 +1,0 @@
-{
-  "name": "sequential-thinking",
-  "command": "npx -y @modelcontextprotocol/server-sequential-thinking",
-  "description": "raciocinio passo a passo"
-}

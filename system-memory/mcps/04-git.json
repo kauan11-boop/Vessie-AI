@@ -1,5 +1,0 @@
-{
-  "name": "git",
-  "command": "npx -y @modelcontextprotocol/server-git",
-  "description": "operacoes git locais"
-}

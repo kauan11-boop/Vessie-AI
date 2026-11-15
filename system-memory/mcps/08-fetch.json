@@ -1,5 +1,0 @@
-{
-  "name": "fetch",
-  "command": "npx -y mcp-server-fetch",
-  "description": "busca de paginas web"
-}

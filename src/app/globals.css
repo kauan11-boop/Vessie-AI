@@ -1,0 +1,213 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===== Design System Vessie (B.4 do Prompt Master) =====
+   Dark terracota padrão + light creme preservado. Zero roxo hardcoded. */
+:root {
+  /* light creme (identidade original) */
+  --background: #FAF7EF;
+  --background-2: #F3EEE1;
+  --sidebar-c: #F1EBDB;
+  --panel: #FFFFFF;
+  --user-msg: #ECE5D2;
+  --foreground: #211D19;
+  --text2: #5E584E;
+  --muted-foreground: #6B6355;
+  --border: #DED4BA;
+  --accent: #C15F3C;
+  --accent-2: #0D8C6D;
+  --hover: rgba(193, 95, 60, 0.08);
+  --danger: #B3261E;
+  --ok: #0D8C6D;
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(222, 212, 186, 0.6);
+  --radius: 14px;
+}
+
+.dark {
+  --background: #16120E;
+  --background-2: #1F1A14;
+  --sidebar-c: #1B1611;
+  --panel: #241D16;
+  --user-msg: #2E261C;
+  --foreground: #F2ECE3;
+  --text2: #B5AB9C;
+  --muted-foreground: #8E8578;
+  --border: #3A3128;
+  --accent: #D96C44;
+  --accent-2: #12A882;
+  --hover: rgba(217, 108, 68, 0.12);
+  --danger: #E5534B;
+  --ok: #12A882;
+  --glass-bg: rgba(36, 29, 22, 0.6);
+  --glass-border: rgba(217, 108, 68, 0.14);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-2: var(--background-2);
+  --color-sidebar-c: var(--sidebar-c);
+  --color-panel: var(--panel);
+  --color-user-msg: var(--user-msg);
+  --color-foreground: var(--foreground);
+  --color-text2: var(--text2);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-hover: var(--hover);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jbmono);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+html, body {
+  height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ===== componentes Vessie ===== */
+
+/* glassmorphism sutil (painéis) */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+}
+
+/* bolhas */
+.bubble-user {
+  background: var(--user-msg);
+  border-radius: 18px 18px 6px 18px;
+}
+.bubble-bot {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px 18px 18px 6px;
+}
+
+/* pulso do "respondendo…" */
+@keyframes genPulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+.gen-pulse { animation: genPulse 1.6s ease-in-out infinite; }
+
+/* entrada de mensagens */
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.msg-in { animation: msgIn 0.25s ease-out both; }
+
+/* mascote flutuante com sombra terracota */
+@keyframes sideMascotFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.mascot-float {
+  animation: sideMascotFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(193, 95, 60, 0.4));
+}
+
+/* borda gradiente animada das imagens (assinatura visual) */
+@keyframes imgBorderFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.img-card {
+  position: relative;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(110deg, var(--accent), #ff6b35, #e8a06c, var(--accent));
+  background-size: 200% 100%;
+  animation: imgBorderFlow 3s linear infinite;
+}
+.img-card > img {
+  border-radius: 14px;
+  display: block;
+}
+@media (prefers-reduced-motion: reduce) {
+  .img-card, .mascot-float, .gen-pulse, .msg-in { animation: none !important; }
+}
+
+/* toast */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* thinking (raciocínio visível) */
+.think {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--background-2);
+  font-size: 12.5px;
+  color: var(--text2);
+}
+.think summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  font-weight: 600;
+  user-select: none;
+}
+.think .think-body {
+  padding: 4px 12px 10px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* código */
+.code-block {
+  background: var(--background-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--sidebar-c);
+  font-family: var(--font-jbmono), monospace;
+  font-size: 11px;
+  color: var(--text2);
+}
+.code-body {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: var(--font-jbmono), monospace;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* foco terracota */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* scrollbar fina */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+::selection {
+  background: rgba(193, 95, 60, 0.3);
+}

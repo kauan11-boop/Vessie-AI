@@ -1,5 +1,0 @@
-{
-  "name": "memory",
-  "command": "npx -y @modelcontextprotocol/server-memory",
-  "description": "memoria persistente chave-valor"
-}

@@ -1,5 +1,0 @@
-{
-  "name": "everart",
-  "command": "npx -y @modelcontextprotocol/server-everart",
-  "description": "template MCP (ajuste o pacote)"
-}

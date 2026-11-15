@@ -1,5 +1,0 @@
-{
-  "name": "puppeteer",
-  "command": "npx -y @modelcontextprotocol/server-puppeteer",
-  "description": "automacao de navegador"
-}

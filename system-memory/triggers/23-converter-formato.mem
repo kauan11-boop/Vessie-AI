@@ -1,2 +1,0 @@
-// trigger converter-formato — dispara quando a mensagem contém "converta"
-@trigger converter-formato when "converta" do save

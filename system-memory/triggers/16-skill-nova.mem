@@ -1,2 +1,0 @@
-// trigger skill-nova — dispara quando a mensagem contém "skill"
-@trigger skill-nova when "skill" do save
