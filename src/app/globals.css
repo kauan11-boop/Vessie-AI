@@ -211,3 +211,18 @@ body {
 ::selection {
   background: rgba(193, 95, 60, 0.3);
 }
+
+/* ---------- DS-BOX ---------- */
+/* painel: respeita áreas seguras (iPhone notch) e limita altura no mobile */
+.dsbox-panel {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+/* abas: barra de rolagem quase invisível */
+.dsbox-tabs { scrollbar-width: none; }
+.dsbox-tabs::-webkit-scrollbar { display: none; }
+/* listas com rolagem discreta */
+.dsbox-list { scrollbar-width: thin; }
+/* serial/console: cursor de terminal visível */
+.dsbox-serial { caret-color: #12A882; }
+.dsbox-term { caret-color: #12A882; }

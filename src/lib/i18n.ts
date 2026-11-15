@@ -16,7 +16,6 @@ const dict = {
     pcOffline: "PC offline",
     pcConnected: "PC connected",
     inputPlaceholder: "Ask Vessie-AI anything…",
-    send: "Send",
     stop: "Stop response",
     thinking: "thinking…",
     generating: "responding…",
@@ -135,7 +134,6 @@ const dict = {
     memorySub: "The AI's local virtual folder: files saved by memory:put blocks, triggers and scripts. Everything stays in your browser.",
     importZip: "Import .zip",
     exportZip: "Export .zip",
-    tabFiles: "Files",
     tabSkills: "Skills",
     tabPlugins: "Plugins",
     tabMcps: "MCPs",
@@ -174,6 +172,21 @@ const dict = {
     consolePlaceholder: "2+2  ·  api.list()  ·  Memory.listFiles()",
     // views
     backToChat: "Back to chat",
+    // DS-BOX
+    dsboxPanel: "DS-BOX panel",
+    tabFiles: "Files",
+    dcsOn: "DCS on — ds:* tools active for models",
+    dcsOff: "DCS off",
+    buildIsoBtn: "Build-Iso",
+    buildIsoActive: "Build-Iso · session active",
+    buildIsoStarted: "🔨 Build-Iso session started — ask in chat: “build and boot an ISO”",
+    send: "Send",
+    emulatorIdle: "emulator idle",
+    emulatorNote:
+      "v86 runs real x86 in WebAssembly (Pentium 4 ~ SSE3). Kernels/ISOs load from URLs or the shelf; no guest network by default. If the v86 CDN is unreachable, the Bash-86X tab still works offline.",
+    vfsEmpty: "Empty VFS. Seed a template, create files, or ask the AI (DCS on): “create a web project”.",
+    buildIsoNote:
+      "The ISO is real 9660 (opens in Explorer/mount/7-Zip). Bootable = embedded free kernel + El Torito. Offline fallback: Bash-86X.",
   },
   "pt-BR": {
     appName: "Vessie AI Chat",
@@ -189,7 +202,6 @@ const dict = {
     pcOffline: "PC offline",
     pcConnected: "PC conectado",
     inputPlaceholder: "Pergunte qualquer coisa à Vessie-AI…",
-    send: "Enviar",
     stop: "Parar resposta",
     thinking: "pensando…",
     generating: "respondendo…",
@@ -302,7 +314,6 @@ const dict = {
     memorySub: "Pasta virtual local da IA: arquivos salvos pelos blocos memory:put, triggers e scripts. Tudo fica no seu navegador.",
     importZip: "Importar .zip",
     exportZip: "Exportar .zip",
-    tabFiles: "Arquivos",
     tabSkills: "Skills",
     tabPlugins: "Plugins",
     tabMcps: "MCPs",
@@ -338,6 +349,21 @@ const dict = {
     runConsole: "Executar",
     consolePlaceholder: "2+2  ·  api.list()  ·  Memory.listFiles()",
     backToChat: "Voltar ao chat",
+    // DS-BOX
+    dsboxPanel: "Painel DS-BOX",
+    tabFiles: "Arquivos",
+    dcsOn: "🟢 DCS ligado — ferramentas ds:* ativas para os modelos",
+    dcsOff: "DCS desligado",
+    buildIsoBtn: "Build-Iso",
+    buildIsoActive: "Build-Iso · sessão ativa",
+    buildIsoStarted: "🔨 Sessão Build-Iso iniciada — peça no chat: “monte e boote uma ISO”",
+    send: "Enviar",
+    emulatorIdle: "emulador parado",
+    emulatorNote:
+      "v86 executa x86 real em WebAssembly (Pentium 4 ~ SSE3). Kernel/ISO são carregados de URLs ou da prateleira; sem rede no convidado por padrão. Se o CDN do v86 estiver inacessível, o Bash-86X continua funcionando offline.",
+    vfsEmpty: "VFS vazio. Use um template, crie arquivos acima, ou peça à IA (com o DCS ligado): “crie um projeto web”.",
+    buildIsoNote:
+      "A ISO é 9660 real (abre no Explorer/mount/7-Zip). Bootável = kernel livre embutido + El Torito. Alternativa offline: Bash-86X.",
   },
 } as const;
 

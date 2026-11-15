@@ -101,12 +101,14 @@ export function InputBar({ lang: lg }: { lang: Lang }) {
             {live ? <Square className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
           </Button>
         </div>
-        <p className="text-[10.5px] text-muted-foreground text-center mt-1.5">
-          <b>Vessie AI Chat</b> responde via <b>LM Studio</b> local — nada sai do seu PC.{" "}
+        <p className="text-[10.5px] text-muted-foreground text-center mt-1.5 leading-snug px-2">
+          <span className="hidden sm:inline">
+            <b>Vessie AI Chat</b> responde via <b>LM Studio</b> local — nada sai do seu PC.{" "}
+          </span>
           <button className="text-accent-2 hover:underline" onClick={() => setHelpOpen(true)}>
-            Ver guia de conexão
+            {lg === "pt-BR" ? "Ver guia de conexão" : "Connection guide"}
           </button>
-          {" "}· Feito para <b>GitHub Pages</b>.
+          <span className="hidden sm:inline">{" "}· Feito para <b>GitHub Pages</b>.</span>
         </p>
       </div>
     </div>

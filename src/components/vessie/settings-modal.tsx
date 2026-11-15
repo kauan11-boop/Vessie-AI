@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings, useUi, DEFAULT_SYSTEM_PROMPT } from "@/lib/store";
+import { useDsbox } from "@/lib/dsbox/store";
+import type { KernelPreset } from "@/lib/dsbox/iso";
 import { useConn } from "@/lib/connection";
 import { PROVIDERS } from "@/lib/providers";
 import { IMAGE_SIZES, IMAGE_MODELS } from "@/lib/image";
@@ -30,9 +32,23 @@ export function SettingsModal({ lang: lg }: { lang: Lang }) {
   const refresh = useConn(s => s.refresh);
   const [draft, setDraft] = useState<Settings>(settings);
   // Radix Dialog desmonta o conteúdo ao fechar: useState(settings) reinicia a cada abertura.
+  const autoLoop = useDsbox(s => s.autoLoop);
+  const setAutoLoop = useDsbox(s => s.setAutoLoop);
+  const kernelPresets = useDsbox(s => s.kernelPresets);
+  const setKernelPresets = useDsbox(s => s.setKernelPresets);
+  const [presetsJson, setPresetsJson] = useState<string>(() => JSON.stringify(kernelPresets));
 
   const save = async (reconnect: boolean) => {
     setSettings(draft);
+    // presets de kernel do DS-BOX (JSON válido é salvo; inválido é ignorado com aviso)
+    try {
+      const parsed = JSON.parse(presetsJson) as KernelPreset[];
+      if (Array.isArray(parsed)) {
+        setKernelPresets(parsed.filter(p => p && typeof p.id === "string" && typeof p.bzimage === "string"));
+      }
+    } catch {
+      toast(lg === "pt-BR" ? "JSON de presets de kernel inválido — mantido o anterior" : "Invalid kernel presets JSON — previous kept");
+    }
     if (reconnect) {
       toast(t(draft.language, "savedSettings"));
       setConnection("connecting");
@@ -55,11 +71,12 @@ export function SettingsModal({ lang: lg }: { lang: Lang }) {
         <p className="text-xs text-muted-foreground -mt-1">{t(lg, "settingsNote")}</p>
 
         <Tabs defaultValue="api" className="mt-1">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="api">{t(lg, "tabApi")}</TabsTrigger>
             <TabsTrigger value="general">{t(lg, "tabGeneral")}</TabsTrigger>
             <TabsTrigger value="image">{t(lg, "tabImage")}</TabsTrigger>
             <TabsTrigger value="voice">Voice</TabsTrigger>
+            <TabsTrigger value="dsbox">DS-BOX</TabsTrigger>
           </TabsList>
 
           <TabsContent value="api" className="space-y-3 mt-2">
@@ -191,11 +208,39 @@ export function SettingsModal({ lang: lg }: { lang: Lang }) {
             </div>
             <p className="text-[11px] text-muted-foreground">Voz pt-BR preferida automaticamente. STT (microfone) disponível no input quando o navegador suporta.</p>
           </TabsContent>
+
+          <TabsContent value="dsbox" className="space-y-3 mt-2">
+            <p className="text-[11px] text-muted-foreground">
+              {lg === "pt-BR"
+                ? "DS-BOX: sandbox com VFS local, Build-Iso (ISO 9660 + El Torito), emulador x86 (v86), Bash-86X e ferramentas ds:* para os modelos. O switch principal fica na barra acima do chat."
+                : "DS-BOX: sandbox with local VFS, Build-Iso (ISO 9660 + El Torito), x86 emulator (v86), Bash-86X and ds:* tools for models. The main switch lives in the bar above the chat."}
+            </p>
+            <div className="flex items-center gap-2">
+              <Switch id="sAutoLoop" checked={autoLoop} onCheckedChange={v => setAutoLoop(v)} />
+              <Label htmlFor="sAutoLoop" className="text-xs">
+                {lg === "pt-BR" ? "Loop agêntico: devolver resultados das ferramentas ao modelo automaticamente" : "Agentic loop: feed tool results back to the model automatically"}
+              </Label>
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="sPresets">{lg === "pt-BR" ? "Presets de kernel extras (JSON — array com id, label, bzimage, cmdline)" : "Extra kernel presets (JSON — array with id, label, bzimage, cmdline)"}</Label>
+              <Input id="sPresets" value={presetsJson} onChange={e => setPresetsJson(e.target.value)} className="mt-1 font-mono text-[11px]" />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {lg === "pt-BR"
+                  ? "Ex.: [{\"id\":\"meukernel\",\"label\":\"Meu Linux\",\"bzimage\":\"https://…/bzImage\",\"cmdline\":\"console=ttyS0\"}]"
+                  : "e.g. [{\"id\":\"mykernel\",\"label\":\"My Linux\",\"bzimage\":\"https://…/bzImage\",\"cmdline\":\"console=ttyS0\"}]"}
+              </p>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {lg === "pt-BR"
+                ? "VFS: dsbox-vfs-v1 · Estado: dsbox-state · ISOs ficam em memória na sessão atual."
+                : "VFS: dsbox-vfs-v1 · State: dsbox-state · ISOs stay in memory for the current session."}
+            </p>
+          </TabsContent>
         </Tabs>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => setOpen(false)}>{t(lg, "close")}</Button>
-          <Button variant="outline" onClick={() => void save(false)}>{t(lg, "close").replace("Fechar", "Salvar")}</Button>
+          <Button variant="outline" onClick={() => void save(false)}>{lg === "pt-BR" ? "Salvar" : "Save"}</Button>
           <Button className="bg-accent text-white hover:opacity-90" onClick={() => void save(true)}>{t(lg, "saveConnect")}</Button>
         </DialogFooter>
       </DialogContent>

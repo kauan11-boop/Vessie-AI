@@ -4,3 +4,5 @@
 
 # segredos de API — o site usa o js/env-config.js gerado, nunca o .env
 .env
+/node_modules
+/.next

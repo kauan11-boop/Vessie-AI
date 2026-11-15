@@ -12,6 +12,8 @@ import { HelpModal, AgentsModal } from "@/components/vessie/modals";
 import { MemoryManager } from "@/components/vessie/memory-manager";
 import { ImageStudio } from "@/components/vessie/image-studio";
 import { SystemApiPage } from "@/components/vessie/system-api";
+import { DSBoxPanel } from "@/components/dsbox/dsbox-panel";
+import { DcsTopBar } from "@/components/dsbox/topbar";
 import { useChat, chatActions, useSettings, useUi, useAgents } from "@/lib/store";
 import { useConn } from "@/lib/connection";
 import { Simulite } from "@/lib/simulite";
@@ -95,7 +97,7 @@ export default function Page() {
           )}
 
           <div className="ml-auto flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-[99px]" onClick={() => setAgentsOpen(true)} aria-label={t(lg, "agents")} title={t(lg, "agents")}>
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 w-8 p-0 rounded-[99px]" onClick={() => setAgentsOpen(true)} aria-label={t(lg, "agents")} title={t(lg, "agents")}>
               <Bot className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-[99px]" onClick={() => setView("image")} aria-label={t(lg, "imageStudio")} title={t(lg, "imageStudio")}>
@@ -108,7 +110,7 @@ export default function Page() {
               <Brain className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-[99px]"
+              variant="ghost" size="sm" className="hidden sm:inline-flex h-8 w-8 p-0 rounded-[99px]"
               aria-label={t(lg, "packZip")} title={t(lg, "packZip")}
               onClick={() => {
                 if (activeChatId) void packChatZip(activeChatId, "vessie-pack");
@@ -116,10 +118,10 @@ export default function Page() {
             >
               <Package className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-[99px]" onClick={() => void check(false)} aria-label={t(lg, "testing")} title="Testar conexão">
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 w-8 p-0 rounded-[99px]" onClick={() => void check(false)} aria-label={t(lg, "testing")} title="Testar conexão">
               <Wifi className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-[99px]" onClick={() => setHelpOpen(true)} aria-label={t(lg, "help")} title={t(lg, "help")}>
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex h-8 w-8 p-0 rounded-[99px]" onClick={() => setHelpOpen(true)} aria-label={t(lg, "help")} title={t(lg, "help")}>
               <HelpCircle className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-[99px]" onClick={() => setSettingsOpen(true)} aria-label={t(lg, "settings")} title={t(lg, "settings")}>
@@ -130,10 +132,14 @@ export default function Page() {
 
         {/* views */}
         {isChatView ? (
-          <main className="flex-1 flex flex-col min-h-0">
-            <ChatArea lang={lg} />
-            <InputBar lang={lg} />
-          </main>
+          <div className="flex-1 flex min-h-0">
+            <main className="flex-1 flex flex-col min-h-0 min-w-0">
+              <DcsTopBar lang={lg} />
+              <ChatArea lang={lg} />
+              <InputBar lang={lg} />
+            </main>
+            <DSBoxPanel lang={lg} />
+          </div>
         ) : view === "memory" ? (
           <main className="flex-1 min-h-0"><MemoryManager lang={lg} /></main>
         ) : view === "api" ? (
