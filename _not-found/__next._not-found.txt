@@ -1,4 +1,0 @@
-1:"$Sreact.fragment"
-2:I[75458,["/vessie-ai/_next/static/chunks/90d107676f0b46b2.js","/vessie-ai/_next/static/chunks/daf416755689ebf4.js"],"default"]
-3:I[68589,["/vessie-ai/_next/static/chunks/90d107676f0b46b2.js","/vessie-ai/_next/static/chunks/daf416755689ebf4.js"],"default"]
-0:{"buildId":"nx8_5-pQXjZbrff0wc4cZ","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
