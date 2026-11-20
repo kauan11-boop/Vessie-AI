@@ -1,11 +1,13 @@
 // Vessie AI — camada de IA multi-provider (corrige D7: apiKey e timeout usados de fato)
 import type { Message, Settings } from "./types";
 import { readSSE } from "./sse";
+import { isPrivateNetworkCall, LocalNetworkBlockedError } from "./net";
 
 export interface WireMessage { role: "system" | "user" | "assistant"; content: string }
 
-function headers(s: Settings): HeadersInit {
-  const h: Record<string, string> = { "Content-Type": "application/json" };
+function headers(s: Settings, opts?: { json?: boolean }): HeadersInit {
+  const h: Record<string, string> = {};
+  if (opts?.json !== false) h["Content-Type"] = "application/json";
   if (s.apiKey && s.apiKey.trim()) h["Authorization"] = `Bearer ${s.apiKey.trim()}`;
   return h;
 }
@@ -14,13 +16,21 @@ function baseUrl(s: Settings): string {
   return s.baseUrl.replace(/\/+$/, "");
 }
 
+/** Sem CORS/PNA o preflight falha deterministicamente — nem tenta (zero erros no console). */
+function assertFetchAllowed(s: Settings): void {
+  if (isPrivateNetworkCall(s.baseUrl, s.forceLocalServer)) {
+    throw new LocalNetworkBlockedError();
+  }
+}
+
 /** GET /models normalizado. */
 export async function listModels(s: Settings, timeoutMs?: number): Promise<string[]> {
+  assertFetchAllowed(s);
   const ctrl = new AbortController();
   const to = setTimeout(() => ctrl.abort(), (timeoutMs ?? s.timeout) * 1000);
   try {
     const res = await fetch(`${baseUrl(s)}/models`, {
-      headers: headers(s), signal: ctrl.signal,
+      headers: headers(s, { json: false }), signal: ctrl.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const j = await res.json();
@@ -49,6 +59,7 @@ export async function chatCompletions(
     temperature?: number;
   } = {}
 ): Promise<ChatResult> {
+  assertFetchAllowed(s);
   const stream = opts.stream ?? s.stream;
   const payload: Record<string, unknown> = {
     model: s.model || "",

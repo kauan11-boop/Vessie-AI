@@ -4,7 +4,7 @@
 // (o propósito do projeto é conectar servidores locais — o dono sabe).
 import { useState, useEffect } from "react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +82,7 @@ export function SettingsModal({ lang: lg }: { lang: Lang }) {
       <DialogContent className="max-w-[640px] max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true">
         <DialogHeader>
           <DialogTitle>{t(lg, "settingsTitle")}</DialogTitle>
+          <DialogDescription className="sr-only">{t(lg, "settingsNote")}</DialogDescription>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-1">{t(lg, "settingsNote")}</p>
 
@@ -118,6 +119,11 @@ export function SettingsModal({ lang: lg }: { lang: Lang }) {
               <p className="text-[11px] text-muted-foreground mt-1">
                 {lg === "pt-BR" ? "Endpoint compatível OpenAI (termina em /v1)." : "OpenAI-compatible endpoint (ends with /v1)."}
               </p>
+              <div className="flex items-center gap-2 mt-2">
+                <Switch id="sForceLocal" checked={draft.forceLocalServer} onCheckedChange={v => setDraft(d => ({ ...d, forceLocalServer: v }))} />
+                <Label htmlFor="sForceLocal" className="text-xs">{t(lg, "forceLocal")}</Label>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">{t(lg, "forceLocalNote")}</p>
             </div>
             <div>
               <Label className="text-xs" htmlFor="sApiKey">{t(lg, "apiKey")}</Label>

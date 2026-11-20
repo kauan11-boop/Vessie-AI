@@ -67,6 +67,8 @@ export interface Settings {
   /** Memória adaptativa coletada e ligada ao system prompt. */
   personaMemory: boolean;
   discord: { token: string; channelId: string; autoReply: boolean; intervalSec: number; styleCard: string; mode: "user" | "bot" };
+  /** Tentar mesmo assim chamar servidor local a partir de página pública (só com Private Network Access desabilitado no navegador). */
+  forceLocalServer: boolean;
 }
 
 export interface Agent {

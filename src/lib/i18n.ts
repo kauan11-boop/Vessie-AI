@@ -59,6 +59,12 @@ const dict = {
     connOk: "Connection successful!",
     connFail: "Could not connect. Check that the server is running.",
     modelsFail: "Could not load models. Check the server.",
+    netLocalBlockedTitle: "Local server blocked by the browser",
+    netLocalBlockedBody:
+      "The public page (GitHub Pages, HTTPS) cannot reach localhost/LAN — Chromium enforces Private Network Access and the server does not answer the preflight. Options: (1) an HTTPS tunnel to your server (cloudflared/ngrok) as Base URL; (2) run the app locally with `bun run dev`; (3) pick the Vessie Local (OFFLINE) model; or, only if you disabled the private-network flag in the browser, enable “Force local-server attempt” below.",
+    forceLocal: "Force local-server attempt",
+    forceLocalNote:
+      "Public HTTPS pages cannot call localhost:1234 — browsers block it (Private Network Access) even with CORS enabled on the server. Prefer an HTTPS tunnel or `bun run dev`. Only enable this if you disabled the private-network flag in your browser.",
     offlineAssumed: "Server unavailable — OFFLINE mode (Simulite) took over",
     offlineNoData:
       "🤖 **Modo OFFLINE sem informações reais.** Ainda não aprendi nada sobre isso — ligue o LM Studio (ou converse com ele ligado para eu aprender) e tente de novo.",
@@ -89,7 +95,7 @@ const dict = {
     // settings modal
     settingsTitle: "Connection & Parameters",
     settingsNote:
-      "This is a static app. It talks directly to the AI server running on your PC via the OpenAI-compatible API. Make sure the local server is on with CORS enabled.",
+      "This is a static app. It talks directly to the AI server running on your PC via the OpenAI-compatible API. Note: on the published HTTPS site the browser blocks Public→Local calls (Private Network Access) — use an HTTPS tunnel as Base URL, run the app locally, or use Vessie Local (OFFLINE).",
     tabGeneral: "General",
     tabApi: "API",
     tabGuide: "Guide",
@@ -242,6 +248,11 @@ const dict = {
     connOk: "Conexão bem-sucedida!",
     connFail: "Não foi possível conectar ao LM Studio. Verifique se o servidor está ligado.",
     modelsFail: "Não foi possível carregar modelos. Verifique o LM Studio.",
+    netLocalBlockedTitle: "Navegador bloqueou o servidor local",
+    netLocalBlockedBody:
+      "A página pública (HTTPS) não pode chamar o seu servidor local — o navegador exige preflight de Private Network Access que o servidor não responde (CORS no servidor não basta no Chromium). Opções: 1) túnel HTTPS (cloudflared/ngrok) até o seu servidor, como Base URL; 2) rodar o app localmente (bun run dev); 3) modelo Vessie Local (OFFLINE). Se você desligou a flag de rede privada do navegador, ative \"Forçar tentativa local\" em Configurações → API.",
+    forceLocal: "Forçar tentativa ao servidor local",
+    forceLocalNote: "Só com a flag de rede privada do navegador desabilitada — o Chromium bloqueia Público→Local mesmo com CORS ativo no servidor.",
     offlineAssumed: "LM Studio indisponível — modo OFFLINE (Simulite) assumiu",
     offlineNoData:
       "🤖 **Modo OFFLINE sem informações reais.** Ainda não aprendi nada sobre isso — ligue o LM Studio (ou converse com ele ligado para eu aprender) e tente de novo.",
@@ -271,7 +282,7 @@ const dict = {
     micFail: "Reconhecimento de fala não disponível neste navegador",
     settingsTitle: "Conexão & Parâmetros",
     settingsNote:
-      "O site é estático (GitHub Pages). Ele fala direto com o servidor de IA rodando no seu PC via API OpenAI-compatível. Certifique-se de que o servidor local está ligado com CORS ativado.",
+      "O site é estático (GitHub Pages). Ele fala direto com o servidor de IA rodando no seu PC via API OpenAI-compatível. Atenção: no site publicado em HTTPS o navegador bloqueia chamadas Público→Local (Private Network Access) — use um túnel HTTPS como Base URL, rode o app localmente, ou use o Vessie Local (OFFLINE).",
     tabGeneral: "Geral",
     tabApi: "API",
     tabGuide: "Guia API",

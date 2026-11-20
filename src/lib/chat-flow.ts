@@ -31,6 +31,8 @@ import { onEmulatorChange } from "./dsbox/emulator";
 import { detectVariant } from "./subagents";
 import { learnFromExchange, bootstrapFromHistory, personaSummary, resetPersona } from "./persona";
 import { isSpam } from "./antispam";
+import { isLocalNetworkBlocked } from "./net";
+import { showLocalNetworkBlockedHint } from "./local-network-hint";
 import {
   discordConfigured, discordRead, discordSend, buildStyleProfile,
   composeStyledReply, startDiscordPolling, stopDiscordPolling, isPolling,
@@ -473,6 +475,14 @@ async function generateResponse(convId: string): Promise<void> {
     if (partial) {
       await commitAssistant(convId, asst.id, partial, useStream.getState().live?.thinking ?? "", true, true);
       if (aborted) toast(t(lang(), "cancelled"));
+    } else if (!aborted && isLocalNetworkBlocked(e)) {
+      // bloqueio determinístico do navegador (HTTPS público → servidor local):
+      // o retry não resolve — orienta uma vez e cai para OFFLINE (Simulite)
+      chatActions.deleteMessage(convId, asst.id);
+      showLocalNetworkBlockedHint(lang());
+      const lastUser = useChat.getState().conversations.find(c => c.id === convId)
+        ?.messages.filter(m => m.role === "user").slice(-1)[0]?.content ?? "";
+      await offlineReply(convId, lastUser, true);
     } else if (!aborted) {
       // retry único em falha de rede (sub-agent corrige o envio automaticamente)
       try {

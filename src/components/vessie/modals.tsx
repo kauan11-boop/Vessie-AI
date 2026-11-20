@@ -3,7 +3,7 @@
 // (Sem tutorial de LM Studio: o propósito do projeto É usar servidores locais —
 // quem instala sabe ligar o servidor. Só o essencial de conexão HTTPS.)
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useUi } from "@/lib/store";
@@ -21,6 +21,9 @@ export function HelpModal({ lang: lg }: { lang: Lang }) {
       <DialogContent className="max-w-[560px] max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true">
         <DialogHeader>
           <DialogTitle>{pt ? "Comandos rápidos" : "Quick commands"}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {pt ? "Guia dos comandos de chat da Vessie-AI" : "Vessie-AI chat command guide"}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="text-sm space-y-3">

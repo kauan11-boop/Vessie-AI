@@ -141,6 +141,7 @@ export const DEFAULT_SETTINGS: Settings = {
   shortReplies: true,
   personaMemory: true,
   discord: { token: "", channelId: "", autoReply: false, intervalSec: 30, styleCard: "", mode: "user" },
+  forceLocalServer: false,
 };
 
 interface SettingsState {

@@ -60,6 +60,30 @@
   --color-hover: var(--hover);
   --color-danger: var(--danger);
   --color-ok: var(--ok);
+  /* tokens shadcn (usados por components/ui/*) — aliases para a paleta Vessie */
+  --color-card: var(--panel);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--panel);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--background-2);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--background-2);
+  --color-accent-foreground: #ffffff;
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: #ffffff;
+  --color-input: var(--border);
+  --color-ring: var(--accent);
+  /* aliases sidebar (ui/sidebar — dead code, mas completa o sistema de tokens) */
+  --color-sidebar: var(--sidebar-c);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-accent: var(--hover);
+  --color-sidebar-accent-foreground: var(--foreground);
+  --color-sidebar-border: var(--border);
+  --color-sidebar-primary: var(--accent);
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-ring: var(--accent);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jbmono);
   --radius-lg: var(--radius);

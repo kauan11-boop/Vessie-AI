@@ -90,6 +90,8 @@ Selecione **Vessie Local** no seletor de modelo: rede neural Simulite (MLP em JS
 
 Aponte para um servidor compatível OpenAI em **Configurações → API**: LM Studio (`http://localhost:1234/v1`), Ollama (`http://localhost:11434/v1`), OpenRouter (com key) ou custom. Sem servidor? O Vessie Local assume automaticamente. (Sem tutorial de LM Studio aqui — o propósito do projeto é esse; o dono já sabe ligar o servidor.)
 
+> **Site publicado em HTTPS não alcança `localhost` do visitante.** Navegadores Chromium aplicam *Private Network Access*: o preflight exige o cabeçalho `Access-Control-Allow-Private-Network: true`, que LM Studio/Ollama **não** enviam — "Enable CORS" sozinho não resolve (e o app não tenta o pedido: zero erros no console). Caminhos que funcionam: **1)** túnel HTTPS para o servidor local (ex.: `cloudflared tunnel --url http://localhost:1234`) como Base URL nas configurações; **2)** rodar o app localmente (`bun run dev` → página localhost, mesma address space, CORS do LM Studio basta); **3)** Vessie Local (OFFLINE). Se você desabilitou a flag de rede privada no navegador, ative **Configurações → API → Forçar tentativa ao servidor local**.
+
 ## Rodar localmente
 
 ```bash
